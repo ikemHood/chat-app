@@ -47,7 +47,7 @@ interface ContactInfoPanelProps {
 function groupByMonth<T extends { date: Date }>(items: T[]) {
   return items.reduce((acc, item) => {
     const monthYear = item.date.toLocaleDateString("en-US", { month: "long" });
-    if (!acc[monthYear]) acc[monthYear] = [];
+    acc[monthYear] ??= [];
     acc[monthYear].push(item);
     return acc;
   }, {} as Record<string, T[]>);

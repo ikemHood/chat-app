@@ -1,40 +1,23 @@
 "use client";
 
 import * as React from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { IconSidebar } from "./icon-sidebar";
 import { MessageList } from "./message-list";
-import { type MessageItemData } from "./swipeable-message-item";
-import { type Conversation } from "./conversation-sidebar";
-import { ChatArea, type Message, type ChatUser } from "./chat-area";
+import { type MessageItemData } from "@/types";
+import { ChatArea } from "./chat-area";
 import { ContactInfoPanel } from "./contact-info-panel";
-import { type User } from "./new-message";
 import { TopBar } from "./top-bar";
 import { authClient } from "@/server/better-auth/client";
-
-interface ChatLayoutProps {
-  // User session
-  user?: {
-    id: string;
-    name: string;
-    email: string;
-    image?: string;
-  };
-  // Conversations
-  conversations: Conversation[];
-  selectedConversation?: Conversation;
-  onSelectConversation?: (conversation: Conversation) => void;
-  isLoadingConversations?: boolean;
-  // Messages
-  messages: Message[];
-  onSendMessage?: (content: string) => void;
-  isLoadingMessages?: boolean;
-  isTyping?: boolean;
-  // Users for new message
-  allUsers: User[];
-  onStartConversation?: (user: User) => void;
-  isLoadingUsers?: boolean;
-}
+import type {
+  User,
+  Conversation,
+  Message,
+  ChatLayoutProps,
+  ChatUser,
+} from "@/types";
+export type { User, Conversation, Message } from "@/types";
 
 export function ChatLayout({
   user,
@@ -44,16 +27,23 @@ export function ChatLayout({
   isLoadingConversations,
   messages,
   onSendMessage,
+  onTyping,
   isLoadingMessages,
   isTyping,
   allUsers,
   onStartConversation,
   isLoadingUsers,
+  onReact,
+  onLoadMoreUsers,
+  onSearchUsers,
+  onArchive,
+  onMute,
+  onPin,
 }: ChatLayoutProps) {
   const router = useRouter();
-  const [activeNav, setActiveNav] = React.useState<"home" | "messages" | "compass" | "folder" | "images">("messages");
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [isContactInfoOpen, setIsContactInfoOpen] = React.useState(false);
+  const [activeNav, setActiveNav] = useState<"home" | "messages" | "compass" | "folder" | "images">("messages");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isContactInfoOpen, setIsContactInfoOpen] = useState(false);
 
 
   const handleLogout = async () => {
@@ -82,7 +72,7 @@ export function ChatLayout({
   };
 
   // Convert conversations to MessageItemData format for the new MessageList
-  const messageItems: MessageItemData[] = React.useMemo(() => {
+  const messageItems: MessageItemData[] = useMemo(() => {
     return conversations.map((conv) => ({
       id: conv.id,
       user: {
@@ -102,7 +92,7 @@ export function ChatLayout({
   }, [conversations]);
 
   // Filter messages based on search
-  const filteredMessages = React.useMemo(() => {
+  const filteredMessages = useMemo(() => {
     if (!searchQuery.trim()) return messageItems;
     const query = searchQuery.toLowerCase();
     return messageItems.filter((item) =>
@@ -145,9 +135,9 @@ export function ChatLayout({
         <TopBar
           user={user}
           onSearch={(query) => setSearchQuery(query)}
-          onNotifications={() => {}}
-          onSettings={() => {}}
-          onProfile={() => {}}
+          onNotifications={undefined}
+          onSettings={undefined}
+          onProfile={undefined}
         />
 
         {/* Content area with message list and chat */}
@@ -163,11 +153,11 @@ export function ChatLayout({
                 onStartConversation?.(selectedUser);
               }}
               isUsersLoading={isLoadingUsers}
-              onArchive={(id) => console.log("Archive:", id)}
+              onArchive={(id) => onArchive?.(id)}
               onMarkUnread={(id) => console.log("Mark unread:", id)}
-              onMute={(id) => console.log("Mute:", id)}
+              onMute={(id) => onMute?.(id)}
               onDelete={(id) => console.log("Delete:", id)}
-              onPin={(id) => console.log("Pin:", id)}
+              onPin={(id) => onPin?.(id)}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               isLoading={isLoadingConversations}
@@ -181,7 +171,7 @@ export function ChatLayout({
             currentUserId={user?.id ?? ""}
             onSendMessage={onSendMessage}
             onOpenContactInfo={() => setIsContactInfoOpen(true)}
-            onReact={(messageId, emoji) => console.log("React:", messageId, emoji)}
+            onReact={onReact}
             isTyping={isTyping}
             isLoading={isLoadingMessages}
           />

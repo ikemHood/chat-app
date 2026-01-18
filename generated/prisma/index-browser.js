@@ -129,6 +129,28 @@ exports.Prisma.PostScalarFieldEnum = {
   createdById: 'createdById'
 };
 
+exports.Prisma.ConversationScalarFieldEnum = {
+  id: 'id',
+  user1Id: 'user1Id',
+  user2Id: 'user2Id',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  settings: 'settings'
+};
+
+exports.Prisma.MessageScalarFieldEnum = {
+  id: 'id',
+  conversationId: 'conversationId',
+  content: 'content',
+  senderId: 'senderId',
+  createdAt: 'createdAt',
+  read: 'read',
+  delivered: 'delivered',
+  readAt: 'readAt',
+  deliveredAt: 'deliveredAt',
+  reactions: 'reactions'
+};
+
 exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -136,7 +158,11 @@ exports.Prisma.UserScalarFieldEnum = {
   emailVerified: 'emailVerified',
   image: 'image',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  about: 'about',
+  lastSeen: 'lastSeen',
+  isOnline: 'isOnline',
+  status: 'status'
 };
 
 exports.Prisma.SessionScalarFieldEnum = {
@@ -180,9 +206,24 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
+exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
+};
+
 exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
+};
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
 };
 
 exports.Prisma.NullsOrder = {
@@ -193,6 +234,8 @@ exports.Prisma.NullsOrder = {
 
 exports.Prisma.ModelName = {
   Post: 'Post',
+  Conversation: 'Conversation',
+  Message: 'Message',
   User: 'User',
   Session: 'Session',
   Account: 'Account',

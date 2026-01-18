@@ -1,15 +1,19 @@
 "use client";
 
 import * as React from "react";
+import { useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
-  ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import type { SwipeableMessageItemProps } from "@/types";
+import { SWIPE_THRESHOLD, ACTION_WIDTH } from "@/constants";
+
+export type { MessageItemUser, MessageItemData } from "@/types";
 
 // Archive icon
 function ArchiveIcon({ className }: { className?: string }) {
@@ -108,39 +112,6 @@ function FilterIcon({ className, style }: { className?: string; style?: React.CS
   );
 }
 
-export interface MessageItemUser {
-  id: string;
-  name: string;
-  image?: string;
-  isOnline?: boolean;
-}
-
-export interface MessageItemData {
-  id: string;
-  user: MessageItemUser;
-  lastMessage: string;
-  timestamp: string;
-  isRead?: boolean;
-  unreadCount?: number;
-}
-
-interface SwipeableMessageItemProps {
-  message: MessageItemData;
-  isSelected?: boolean;
-  onSelect?: () => void;
-  onArchive?: () => void;
-  onMarkUnread?: () => void;
-  onMute?: () => void;
-  onDelete?: () => void;
-  onPin?: () => void;
-  onContactInfo?: () => void;
-  onExport?: () => void;
-  onClear?: () => void;
-}
-
-const SWIPE_THRESHOLD = 72;
-const ACTION_WIDTH = 64;
-
 export function SwipeableMessageItem({
   message,
   isSelected,
@@ -154,12 +125,12 @@ export function SwipeableMessageItem({
   onExport,
   onClear,
 }: SwipeableMessageItemProps) {
-  const [swipeX, setSwipeX] = React.useState(0);
-  const [startX, setStartX] = React.useState(0);
-  const [isDragging, setIsDragging] = React.useState(false);
-  const [isLongPress, setIsLongPress] = React.useState(false);
-  const longPressTimer = React.useRef<NodeJS.Timeout | null>(null);
-  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [swipeX, setSwipeX] = useState(0);
+  const [startX, setStartX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isLongPress, setIsLongPress] = useState(false);
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Determine which action to show
   const showArchive = swipeX < -SWIPE_THRESHOLD / 2;

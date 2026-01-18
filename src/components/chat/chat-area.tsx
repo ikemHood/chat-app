@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Search, Phone, Video, MoreHorizontal, Smile, Paperclip, Send, Mic } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,38 +14,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-export interface Message {
-  id: string;
-  content: string;
-  timestamp: Date;
-  senderId: string;
-  status: "sending" | "sent" | "delivered" | "read";
-  reactions?: Record<string, number>; // emoji -> count
-  userReaction?: string; // current user's reaction
-}
-
-const REACTION_OPTIONS = ["👍", "❤️", "😂", "😮", "😢", "😡"];
-
-export interface ChatUser {
-  id: string;
-  name: string;
-  email: string;
-  image?: string;
-  isOnline: boolean;
-  lastSeen?: Date;
-}
-
-interface ChatAreaProps {
-  user?: ChatUser;
-  messages: Message[];
-  currentUserId: string;
-  onSendMessage?: (content: string) => void;
-  onOpenContactInfo?: () => void;
-  onReact?: (messageId: string, emoji: string) => void;
-  isTyping?: boolean;
-  isLoading?: boolean;
-}
+import type { Message, ChatUser, ChatAreaProps } from "@/types";
+import { REACTION_OPTIONS } from "@/constants";
+export type { Message, ChatUser } from "@/types";
 
 function formatTime(date: Date): string {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -85,15 +57,26 @@ function MessageBubble({
   showTimestamp = true,
   isLastInGroup = false,
   onReact,
+  currentUserId,
 }: {
   message: Message;
   isSent: boolean;
   showTimestamp?: boolean;
   isLastInGroup?: boolean;
   onReact?: (emoji: string) => void;
+  currentUserId: string;
 }) {
-  const [showReactions, setShowReactions] = React.useState(false);
-  const longPressTimer = React.useRef<NodeJS.Timeout | null>(null);
+  const [showReactions, setShowReactions] = useState(false);
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Derive userReaction
+  const userReaction = useMemo(() => {
+    if (!message.reactions) return undefined;
+    for (const [emoji, userIds] of Object.entries(message.reactions)) {
+      if (userIds.includes(currentUserId)) return emoji;
+    }
+    return undefined;
+  }, [message.reactions, currentUserId]);
 
   const handleTouchStart = () => {
     longPressTimer.current = setTimeout(() => {
@@ -143,8 +126,13 @@ function MessageBubble({
                   setShowReactions(false);
                 }}
                 className={cn(
+                  //message.userReaction === emoji && "bg-[#F3F3EE]"
+                // userReaction is now derived, but we need to check if we use the prop or the local variable.
+                   // The variable `userReaction` is defined above.
+                   // So replace accessing message.userReaction with userReaction
                   "w-8 h-8 flex items-center justify-center text-lg hover:bg-[#F3F3EE] hover:scale-125 transition-all rounded-full select-none",
-                  message.userReaction === emoji && "bg-[#F3F3EE]"
+                  //message.userReaction === emoji && "bg-[#F3F3EE]"
+                  userReaction === emoji && "bg-[#F3F3EE]"
                 )}
               >
                 {emoji}
@@ -184,13 +172,13 @@ function MessageBubble({
                isSent ? "left-3" : "right-3"
              )}
            >
-             {Object.entries(message.reactions).map(([emoji, count]) => (
+             {Object.entries(message.reactions).map(([emoji, userIds]) => (
                <div 
                  key={emoji}
                  className="flex items-center gap-0.5 px-1"
                >
                  <span className="text-[10px] leading-3">{emoji}</span>
-                 {count > 1 && <span className="text-[9px] text-[#596881] font-medium leading-3">{count}</span>}
+                 {userIds.length > 1 && <span className="text-[9px] text-[#596881] font-medium leading-3">{userIds.length}</span>}
                </div>
              ))}
            </div>
@@ -301,13 +289,13 @@ export function ChatArea({
   isTyping,
   isLoading,
 }: ChatAreaProps) {
-  const [messageInput, setMessageInput] = React.useState("");
-  const [messagesState, setMessagesState] = React.useState(messages);
-  const scrollRef = React.useRef<HTMLDivElement>(null);
-  const inputRef = React.useRef<HTMLInputElement>(null);
+  const [messageInput, setMessageInput] = useState("");
+  const [messagesState, setMessagesState] = useState(messages);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Sync state with props
-  React.useEffect(() => {
+  useEffect(() => {
     setMessagesState(messages);
   }, [messages]);
 
@@ -320,32 +308,21 @@ export function ChatArea({
     setMessagesState((prev) => 
       prev.map((msg) => {
         if (msg.id === messageId) {
-          const currentReaction = msg.userReaction;
-          let newReactions = { ...(msg.reactions || {}) };
-          let newUserReaction = undefined;
-
-          // If clicking same reaction, remove it
-          if (currentReaction === emoji) {
-            newReactions[emoji] = Math.max(0, (newReactions[emoji] || 1) - 1);
-            if (newReactions[emoji] === 0) delete newReactions[emoji];
-            newUserReaction = undefined;
-          } 
-          // If changing reaction
-          else {
-            // Remove old reaction count
-            if (currentReaction) {
-              newReactions[currentReaction] = Math.max(0, (newReactions[currentReaction] || 1) - 1);
-              if (newReactions[currentReaction] === 0) delete newReactions[currentReaction];
-            }
-            // Add new reaction count
-            newReactions[emoji] = (newReactions[emoji] || 0) + 1;
-            newUserReaction = emoji;
+          const reactions = { ...(msg.reactions ?? {}) };
+          const userIds = reactions[emoji] ?? [];
+          
+          if (userIds.includes(currentUserId)) {
+             // Remove
+             reactions[emoji] = userIds.filter(id => id !== currentUserId);
+             if (reactions[emoji].length === 0) delete reactions[emoji];
+          } else {
+             // Add
+             reactions[emoji] = [...userIds, currentUserId];
           }
           
           return {
             ...msg,
-            reactions: newReactions,
-            userReaction: newUserReaction
+            reactions,
           };
         }
         return msg;
@@ -354,7 +331,7 @@ export function ChatArea({
   };
 
   // Scroll to bottom when messages change
-  React.useEffect(() => {
+  useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
@@ -376,7 +353,7 @@ export function ChatArea({
   };
 
   // Group messages by date
-  const groupedMessages = React.useMemo(() => {
+  const groupedMessages = useMemo(() => {
     const groups: { date: Date; messages: Message[] }[] = [];
     let currentDate: string | null = null;
 
@@ -573,6 +550,7 @@ export function ChatArea({
                               isLastInGroup={isLastInGroup}
                               showTimestamp={isLastInGroup}
                               onReact={(emoji) => handleReact(message.id, emoji)}
+                              currentUserId={currentUserId}
                             />
                           );
                         })}

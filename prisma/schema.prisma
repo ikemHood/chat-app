@@ -6,10 +6,6 @@ generator client {
   output   = "../generated/prisma"
 }
 
-// NOTE: When using mysql or sqlserver, uncomment the //@db.Text annotations in model Account below
-// Further reading:
-// https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -27,17 +23,69 @@ model Post {
   @@index([name])
 }
 
+// Conversation between two users
+model Conversation {
+  id        String   @id @default(cuid())
+  user1Id   String
+  user2Id   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Per-user settings stored as JSON: { "userId": { archived: bool, muted: bool, pinned: bool } }
+  settings Json @default("{}")
+
+  user1    User      @relation("User1Conversations", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2    User      @relation("User2Conversations", fields: [user2Id], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@unique([user1Id, user2Id])
+  @@index([user1Id])
+  @@index([user2Id])
+}
+
+model Message {
+  id             String    @id @default(cuid())
+  conversationId String
+  content        String
+  senderId       String
+  createdAt      DateTime  @default(now())
+  read           Boolean   @default(false)
+  delivered      Boolean   @default(false)
+  readAt         DateTime?
+  deliveredAt    DateTime?
+
+  // Reactions stored as JSON: { "0": ["userId1", "userId2"], "1": ["userId3"] }
+  reactions Json?
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("SentMessages", fields: [senderId], references: [id])
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
 model User {
   id            String    @id
-  name          String //@db.Text
+  name          String
   email         String
   emailVerified Boolean   @default(false)
-  image         String? //@db.Text
+  image         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @default(now()) @updatedAt
   sessions      Session[]
   accounts      Account[]
   posts         Post[]
+
+  // Chat features
+  about    String?
+  lastSeen DateTime @default(now())
+  isOnline Boolean  @default(false)
+  status   String?
+
+  sentMessages         Message[]      @relation("SentMessages")
+  conversationsAsUser1 Conversation[] @relation("User1Conversations")
+  conversationsAsUser2 Conversation[] @relation("User2Conversations")
 
   @@unique([email])
   @@map("user")
@@ -49,8 +97,8 @@ model Session {
   token     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  ipAddress String? //@db.Text
-  userAgent String? //@db.Text
+  ipAddress String?
+  userAgent String?
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -60,17 +108,17 @@ model Session {
 
 model Account {
   id                    String    @id
-  accountId             String //@db.Text
-  providerId            String //@db.Text
+  accountId             String
+  providerId            String
   userId                String
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String? //@db.Text
-  refreshToken          String? //@db.Text
-  idToken               String? //@db.Text
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
-  scope                 String? //@db.Text
-  password              String? //@db.Text
+  scope                 String?
+  password              String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -79,8 +127,8 @@ model Account {
 
 model Verification {
   id         String   @id
-  identifier String //@db.Text
-  value      String //@db.Text
+  identifier String
+  value      String
   expiresAt  DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now()) @updatedAt

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MessageCircle, Github, Loader2 } from "lucide-react";
@@ -16,14 +17,14 @@ import { authClient } from "@/server/better-auth/client";
 
 export default function SignUpPage() {
   const router = useRouter();
-  const [name, setName] = React.useState("");
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [confirmPassword, setConfirmPassword] = React.useState("");
-  const [agreeToTerms, setAgreeToTerms] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [isGithubLoading, setIsGithubLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGithubLoading, setIsGithubLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -4,8 +4,7 @@ import * as React from "react";
 import { Search, Bell, Settings, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+
 
 // Message icon for the header
 function MessageCircleIcon({ className }: { className?: string }) {

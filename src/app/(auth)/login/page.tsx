@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Github, Loader2 } from "lucide-react";
+import { MessageCircle, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,12 +17,12 @@ import { authClient } from "@/server/better-auth/client";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [rememberMe, setRememberMe] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [isGithubLoading, setIsGithubLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGithubLoading, setIsGithubLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,15 +48,15 @@ export default function LoginPage() {
     }
   };
 
-  const handleGithubLogin = async () => {
+  const handleGoogleLogin = async () => {
     setIsGithubLoading(true);
     try {
       await authClient.signIn.social({
-        provider: "github",
+        provider: "google",
         callbackURL: "/chat",
       });
     } catch {
-      setError("Failed to connect with GitHub");
+      setError("Failed to connect with Google");
       setIsGithubLoading(false);
     }
   };
@@ -69,16 +70,20 @@ export default function LoginPage() {
       </div>
 
       {/* Theme toggle */}
-      <div className="absolute right-4 top-4">
+      {/* <div className="absolute right-4 top-4">
         <ThemeToggle />
-      </div>
+      </div> */}
 
       {/* Logo */}
       <div className="mb-8 flex flex-col items-center gap-2">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary">
-          <MessageCircle className="h-6 w-6 text-primary-foreground" />
-        </div>
-        <h1 className="text-xl font-semibold text-foreground">Message</h1>
+        <div className="overflow-hidden rounded-full cursor-pointer hover:opacity-90 transition-opacity" style={{ width: "44px", height: "44px" }}>
+              <img 
+                src="/logo.png" 
+                alt="Logo" 
+                className="h-full w-full object-cover"
+              />
+            </div>
+        <h1 className="text-xl font-semibold text-foreground">Chat APP</h1>
       </div>
 
       {/* Login Card */}
@@ -179,15 +184,15 @@ export default function LoginPage() {
             type="button"
             variant="outline"
             className="h-11 w-full"
-            onClick={handleGithubLogin}
+            onClick={handleGoogleLogin}
             disabled={isGithubLoading}
           >
             {isGithubLoading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-              <Github className="mr-2 h-4 w-4" />
+              <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path></svg>
             )}
-            GitHub
+            Google
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">

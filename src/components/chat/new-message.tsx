@@ -1,17 +1,12 @@
 "use client";
 
 import * as React from "react";
+import { useState, useMemo } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SearchIcon } from "./swipeable-message-item";
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  image?: string;
-  isOnline: boolean;
-}
+import type { User } from "@/types";
+export type { User } from "@/types";
 
 interface NewMessagePopupProps {
   users: User[];
@@ -77,10 +72,10 @@ export function NewMessagePopup({
   isLoading,
   children
 }: NewMessagePopupProps) {
-  const [open, setOpen] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredUsers = React.useMemo(() => {
+  const filteredUsers = useMemo(() => {
     if (!searchQuery.trim()) return users;
     const query = searchQuery.toLowerCase();
     return users.filter(
