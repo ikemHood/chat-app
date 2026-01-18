@@ -2,11 +2,9 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Search, Phone, Video, MoreHorizontal, Smile, Paperclip, Send, ChevronDown } from "lucide-react";
+import { Search, Phone, Video, MoreHorizontal, Smile, Paperclip, Send, Mic } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   DropdownMenu,
@@ -22,7 +20,11 @@ export interface Message {
   timestamp: Date;
   senderId: string;
   status: "sending" | "sent" | "delivered" | "read";
+  reactions?: Record<string, number>; // emoji -> count
+  userReaction?: string; // current user's reaction
 }
+
+const REACTION_OPTIONS = ["👍", "❤️", "😂", "😮", "😢", "😡"];
 
 export interface ChatUser {
   id: string;
@@ -39,6 +41,7 @@ interface ChatAreaProps {
   currentUserId: string;
   onSendMessage?: (content: string) => void;
   onOpenContactInfo?: () => void;
+  onReact?: (messageId: string, emoji: string) => void;
   isTyping?: boolean;
   isLoading?: boolean;
 }
@@ -61,44 +64,157 @@ function formatMessageDate(date: Date): string {
   }
 }
 
+// Check icon for read messages
+function ChecksIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path 
+        d="M10.5 4.08337L5.25 9.33337L2.625 6.70837M12.25 4.08337L7 9.33337M4.375 6.70837L9.625 1.45837" 
+        stroke="currentColor" 
+        strokeWidth="1.17" 
+        strokeLinecap="round" 
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function MessageBubble({
   message,
   isSent,
   showTimestamp = true,
+  isLastInGroup = false,
+  onReact,
 }: {
   message: Message;
   isSent: boolean;
   showTimestamp?: boolean;
+  isLastInGroup?: boolean;
+  onReact?: (emoji: string) => void;
 }) {
+  const [showReactions, setShowReactions] = React.useState(false);
+  const longPressTimer = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleTouchStart = () => {
+    longPressTimer.current = setTimeout(() => {
+      setShowReactions(true);
+    }, 500);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+    }
+  };
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setShowReactions(true);
+  };
+
   return (
     <div
       className={cn(
-        "flex flex-col gap-1",
+        "flex flex-col gap-1 group relative",
         isSent ? "items-end" : "items-start"
       )}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onContextMenu={handleContextMenu}
     >
+      {/* Reaction Picker Popup */}
+      {showReactions && (
+        <>
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => setShowReactions(false)} 
+          />
+          <div 
+            className={cn(
+              "absolute bottom-full mb-2 z-50 flex items-center gap-1 p-1 bg-white rounded-full shadow-lg border border-[#E8E5DF] animate-in fade-in zoom-in duration-200",
+              isSent ? "right-0" : "left-0"
+            )}
+          >
+            {REACTION_OPTIONS.map((emoji) => (
+              <button
+                key={emoji}
+                onClick={() => {
+                  onReact?.(emoji);
+                  setShowReactions(false);
+                }}
+                className={cn(
+                  "w-8 h-8 flex items-center justify-center text-lg hover:bg-[#F3F3EE] hover:scale-125 transition-all rounded-full select-none",
+                  message.userReaction === emoji && "bg-[#F3F3EE]"
+                )}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
       <div
         className={cn(
-          "max-w-[70%] rounded-2xl px-4 py-2.5",
+          "max-w-[70%] px-3 py-3 relative",
           isSent
-            ? "bg-primary text-primary-foreground rounded-br-md"
-            : "bg-muted text-foreground rounded-bl-md"
+            ? isLastInGroup 
+              ? "rounded-xl rounded-br-sm"
+              : "rounded-xl"
+            : isLastInGroup
+              ? "rounded-xl rounded-bl-sm"
+              : "rounded-xl"
         )}
+        style={{
+          background: isSent ? "#F0FDF4" : "#FFFFFF",
+        }}
       >
-        <p className="text-sm leading-relaxed">{message.content}</p>
+        <p 
+          className="text-xs leading-relaxed"
+          style={{ color: isSent ? "#111625" : "#1C1C1C" }}
+        >
+          {message.content}
+        </p>
+
+        {/* Reactions Display */}
+        {message.reactions && Object.keys(message.reactions).length > 0 && (
+           <div 
+             className={cn(
+               "absolute -bottom-2.5 flex items-center justify-center p-0.5 bg-white border border-[#E8E5DF] rounded-full shadow-sm z-10",
+               isSent ? "left-3" : "right-3"
+             )}
+           >
+             {Object.entries(message.reactions).map(([emoji, count]) => (
+               <div 
+                 key={emoji}
+                 className="flex items-center gap-0.5 px-1"
+               >
+                 <span className="text-[10px] leading-3">{emoji}</span>
+                 {count > 1 && <span className="text-[9px] text-[#596881] font-medium leading-3">{count}</span>}
+               </div>
+             ))}
+           </div>
+        )}
       </div>
+
       {showTimestamp && (
         <div className={cn(
-          "flex items-center gap-1 text-[10px] text-muted-foreground",
+          "flex items-center gap-1.5 pt-1",
           isSent ? "flex-row-reverse" : "flex-row"
         )}>
-          <span>{formatTime(message.timestamp)}</span>
+          <span 
+            className="text-xs"
+            style={{ color: "#8B8B8B" }}
+          >
+            {formatTime(message.timestamp)}
+          </span>
           {isSent && (
-            <span className={cn(
-              message.status === "read" ? "text-primary" : "text-muted-foreground"
-            )}>
-              {message.status === "sending" ? "○" : message.status === "sent" ? "✓" : "✓✓"}
-            </span>
+            <ChecksIcon 
+              className={cn(
+                "h-3.5 w-3.5",
+                message.status === "read" ? "text-[#1E9A80]" : "text-[#8B8B8B]"
+              )} 
+            />
           )}
         </div>
       )}
@@ -109,7 +225,13 @@ function MessageBubble({
 function DateDivider({ date }: { date: Date }) {
   return (
     <div className="flex items-center justify-center py-4">
-      <span className="text-xs font-medium text-muted-foreground">
+      <span 
+        className="px-3 py-1 text-sm font-medium rounded-full"
+        style={{ 
+          background: "#FFFFFF",
+          color: "#596881"
+        }}
+      >
         {formatMessageDate(date)}
       </span>
     </div>
@@ -119,13 +241,54 @@ function DateDivider({ date }: { date: Date }) {
 function TypingIndicator() {
   return (
     <div className="flex items-start gap-1 py-2">
-      <div className="flex gap-1 rounded-2xl bg-muted px-4 py-3">
-        <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.3s]" />
-        <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.15s]" />
-        <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground" />
+      <div 
+        className="flex gap-1 rounded-xl px-4 py-3"
+        style={{ background: "#FFFFFF" }}
+      >
+        <span className="h-2 w-2 animate-bounce rounded-full bg-[#8B8B8B] [animation-delay:-0.3s]" />
+        <span className="h-2 w-2 animate-bounce rounded-full bg-[#8B8B8B] [animation-delay:-0.15s]" />
+        <span className="h-2 w-2 animate-bounce rounded-full bg-[#8B8B8B]" />
       </div>
     </div>
   );
+}
+
+// Icon button component for header
+function IconButton({ 
+  children, 
+  onClick, 
+  tooltip 
+}: { 
+  children: React.ReactNode; 
+  onClick?: () => void;
+  tooltip?: string;
+}) {
+  const button = (
+    <button
+      onClick={onClick}
+      className="flex items-center justify-center"
+      style={{
+        width: "32px",
+        height: "32px",
+        background: "#FFFFFF",
+        border: "1px solid #E8E5DF",
+        borderRadius: "8px"
+      }}
+    >
+      {children}
+    </button>
+  );
+
+  if (tooltip) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{button}</TooltipTrigger>
+        <TooltipContent>{tooltip}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return button;
 }
 
 export function ChatArea({
@@ -133,20 +296,69 @@ export function ChatArea({
   messages,
   currentUserId,
   onSendMessage,
+  onReact,
   onOpenContactInfo,
   isTyping,
   isLoading,
 }: ChatAreaProps) {
   const [messageInput, setMessageInput] = React.useState("");
+  const [messagesState, setMessagesState] = React.useState(messages);
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
+
+  // Sync state with props
+  React.useEffect(() => {
+    setMessagesState(messages);
+  }, [messages]);
+
+  // Handle local reaction update
+  const handleReact = (messageId: string, emoji: string) => {
+    // Call parent handler
+    onReact?.(messageId, emoji);
+
+    // Optimistic update
+    setMessagesState((prev) => 
+      prev.map((msg) => {
+        if (msg.id === messageId) {
+          const currentReaction = msg.userReaction;
+          let newReactions = { ...(msg.reactions || {}) };
+          let newUserReaction = undefined;
+
+          // If clicking same reaction, remove it
+          if (currentReaction === emoji) {
+            newReactions[emoji] = Math.max(0, (newReactions[emoji] || 1) - 1);
+            if (newReactions[emoji] === 0) delete newReactions[emoji];
+            newUserReaction = undefined;
+          } 
+          // If changing reaction
+          else {
+            // Remove old reaction count
+            if (currentReaction) {
+              newReactions[currentReaction] = Math.max(0, (newReactions[currentReaction] || 1) - 1);
+              if (newReactions[currentReaction] === 0) delete newReactions[currentReaction];
+            }
+            // Add new reaction count
+            newReactions[emoji] = (newReactions[emoji] || 0) + 1;
+            newUserReaction = emoji;
+          }
+          
+          return {
+            ...msg,
+            reactions: newReactions,
+            userReaction: newUserReaction
+          };
+        }
+        return msg;
+      })
+    );
+  };
 
   // Scroll to bottom when messages change
   React.useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isTyping]);
+  }, [messagesState, isTyping]);
 
   const handleSend = () => {
     if (messageInput.trim() && onSendMessage) {
@@ -168,7 +380,7 @@ export function ChatArea({
     const groups: { date: Date; messages: Message[] }[] = [];
     let currentDate: string | null = null;
 
-    messages.forEach((message) => {
+    messagesState.forEach((message) => {
       const dateStr = message.timestamp.toDateString();
       if (dateStr !== currentDate) {
         groups.push({ date: message.timestamp, messages: [message] });
@@ -179,16 +391,22 @@ export function ChatArea({
     });
 
     return groups;
-  }, [messages]);
+  }, [messagesState]);
 
   if (!user) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center bg-background">
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-          <Send className="h-8 w-8 text-muted-foreground" />
+      <div 
+        className="flex flex-1 flex-col items-center justify-center"
+        style={{ background: "#FFFFFF", borderRadius: "24px" }}
+      >
+        <div 
+          className="mb-4 flex h-16 w-16 items-center justify-center rounded-full"
+          style={{ background: "#F3F3EE" }}
+        >
+          <Send className="h-8 w-8" style={{ color: "#8B8B8B" }} />
         </div>
-        <h3 className="text-lg font-semibold text-foreground">Select a conversation</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h3 className="text-lg font-semibold" style={{ color: "#111625" }}>Select a conversation</h3>
+        <p className="mt-1 text-sm" style={{ color: "#596881" }}>
           Choose from your existing conversations or start a new one
         </p>
       </div>
@@ -197,149 +415,243 @@ export function ChatArea({
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="flex flex-1 flex-col bg-background">
+      <div 
+        className="flex flex-1 flex-col min-h-0"
+        style={{ 
+          background: "#FFFFFF",
+          borderRadius: "24px",
+          padding: "12px"
+        }}
+      >
         {/* Chat Header */}
-        <div className="flex items-center justify-between border-b border-border px-6 py-3">
+        <div 
+          className="flex items-center justify-between shrink-0"
+          style={{ 
+            padding: "4px 12px 16px",
+            gap: "12px"
+          }}
+        >
           <button
             onClick={onOpenContactInfo}
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
           >
-            <Avatar className="h-10 w-10">
+            <Avatar style={{ width: "40px", height: "40px" }}>
               <AvatarImage src={user.image} alt={user.name} />
               <AvatarFallback>
                 {user.name.split(" ").map((n) => n[0]).join("").toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">{user.name}</h3>
-              <p className={cn(
-                "text-xs",
-                user.isOnline ? "text-online" : "text-muted-foreground"
-              )}>
+            <div className="flex flex-col gap-1">
+              <h3 
+                className="text-sm font-medium"
+                style={{ 
+                  color: "#111625",
+                  letterSpacing: "-0.006em"
+                }}
+              >
+                {user.name}
+              </h3>
+              <p 
+                className="text-xs font-medium"
+                style={{ color: user.isOnline ? "#38C793" : "#8B8B8B" }}
+              >
                 {user.isOnline ? "Online" : "Offline"}
               </p>
             </div>
           </button>
 
-          <div className="flex items-center gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                  <Search className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Search in chat</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                  <Phone className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Voice call</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                  <Video className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Video call</TooltipContent>
-            </Tooltip>
+          {/* Icon row */}
+          <div className="flex items-center gap-3">
+            <IconButton tooltip="Search in chat">
+              <Search className="h-4 w-4" style={{ color: "#262626" }} />
+            </IconButton>
+            <IconButton tooltip="Voice call">
+              <Phone className="h-4 w-4" style={{ color: "#262626" }} />
+            </IconButton>
+            <IconButton tooltip="Video call">
+              <Video className="h-4 w-4" style={{ color: "#262626" }} />
+            </IconButton>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
+                <div>
+                  <IconButton>
+                    <MoreHorizontal className="h-4 w-4" style={{ color: "#262626" }} />
+                  </IconButton>
+                </div>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={onOpenContactInfo}>
-                  Contact info
+              <DropdownMenuContent 
+                align="end"
+                className="w-56 p-2"
+                style={{
+                  background: "#FFFFFF",
+                  borderRadius: "12px",
+                  boxShadow: "0 4px 24px rgba(0, 0, 0, 0.12)",
+                  border: "none"
+                }}
+              >
+                <DropdownMenuItem 
+                  onClick={onOpenContactInfo}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-[#F3F3EE] focus:bg-[#F3F3EE] focus:text-[#262626] outline-none"
+                >
+                  <svg className="w-5 h-5 text-[#262626]" viewBox="0 0 20 20" fill="none">
+                    <path d="M10 12.5C12.0711 12.5 13.75 10.8211 13.75 8.75C13.75 6.67893 12.0711 5 10 5C7.92893 5 6.25 6.67893 6.25 8.75C6.25 10.8211 7.92893 12.5 10 12.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M10 12.5C6.54822 12.5 3.75 15.2982 3.75 18.75H16.25C16.25 15.2982 13.4518 12.5 10 12.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span className="text-sm font-medium text-[#262626]">Contact info</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>Mute notifications</DropdownMenuItem>
-                <DropdownMenuItem>Export chat</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive">
-                  Delete chat
+
+                <DropdownMenuItem className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-[#F3F3EE] focus:bg-[#F3F3EE] focus:text-[#262626] outline-none">
+                  <div className="flex items-center gap-3">
+                    <svg className="w-5 h-5 text-[#262626]" viewBox="0 0 20 20" fill="none">
+                      <path d="M16.25 7.5V10M16.25 10V12.5M16.25 10H18.75M16.25 10H13.75M8.75 12.5C10.8211 12.5 12.5 10.8211 12.5 8.75C12.5 6.67893 10.8211 5 8.75 5C6.67893 5 5 6.67893 5 8.75C5 10.8211 6.67893 12.5 8.75 12.5ZM8.75 12.5C5.98858 12.5 3.75 14.7386 3.75 17.5H13.75C13.75 14.7386 11.5114 12.5 8.75 12.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <span className="text-sm font-medium text-[#262626]">Mute</span>
+                  </div>
+                  <svg className="w-4 h-4 text-[#8B8B8B]" viewBox="0 0 16 16" fill="none">
+                    <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-[#F3F3EE] focus:bg-[#F3F3EE] focus:text-[#262626] outline-none">
+                  <svg className="w-5 h-5 text-[#262626]" viewBox="0 0 20 20" fill="none">
+                    <path d="M6.25 17.5H13.75C14.4404 17.5 15 16.9404 15 16.25V7.5L10 2.5H6.25C5.55964 2.5 5 3.05964 5 3.75V16.25C5 16.9404 5.55964 17.5 6.25 17.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M10 2.5V7.5H15M7.5 11.25L10 8.75L12.5 11.25M10 8.75V15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span className="text-sm font-medium text-[#262626]">Export chat</span>
+                </DropdownMenuItem>
+                
+                <DropdownMenuItem className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-red-50 focus:bg-red-50 outline-none">
+                  <svg className="w-5 h-5 text-[#E53935]" viewBox="0 0 20 20" fill="none">
+                    <path d="M3.75 5H16.25M7.5 5V3.75C7.5 3.05964 8.05964 2.5 8.75 2.5H11.25C11.9404 2.5 12.5 3.05964 12.5 3.75V5M15 5V16.25C15 16.9404 14.4404 17.5 13.75 17.5H6.25C5.55964 17.5 5 16.9404 5 16.25V5H15Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span className="text-sm font-medium text-[#E53935]">Delete chat</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
 
-        {/* Messages */}
-        <ScrollArea ref={scrollRef} className="flex-1 px-6">
-          <div className="py-4">
-            {isLoading ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
-              </div>
-            ) : (
-              <>
-                {groupedMessages.map((group, groupIndex) => (
-                  <React.Fragment key={groupIndex}>
-                    <DateDivider date={group.date} />
-                    <div className="flex flex-col gap-3">
-                      {group.messages.map((message, messageIndex) => (
-                        <MessageBubble
-                          key={message.id}
-                          message={message}
-                          isSent={message.senderId === currentUserId}
-                          showTimestamp={
+        {/* Messages Content Area */}
+        <div 
+          className="flex-1 flex flex-col overflow-hidden min-h-0"
+          style={{ 
+            background: "#F3F3EE",
+            borderRadius: "16px",
+            padding: "12px"
+          }}
+        >
+          <div 
+            ref={scrollRef} 
+            className="flex-1 overflow-y-auto no-scrollbar"
+            style={{ 
+              display: "flex", 
+              flexDirection: "column" 
+            }}
+          >
+            <div className="flex flex-col mt-auto pt-4">
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#E8E5DF] border-t-[#1E9A80]" />
+                </div>
+              ) : (
+                <>
+                  {groupedMessages.map((group, groupIndex) => (
+                    <React.Fragment key={groupIndex}>
+                      <DateDivider date={group.date} />
+                      <div className="flex flex-col gap-1">
+                        {group.messages.map((message, messageIndex) => {
+                          const isSent = message.senderId === currentUserId;
+                          const isLastInGroup = 
                             messageIndex === group.messages.length - 1 ||
-                            group.messages[messageIndex + 1]?.senderId !== message.senderId
-                          }
-                        />
-                      ))}
-                    </div>
-                  </React.Fragment>
-                ))}
-                {isTyping && <TypingIndicator />}
-              </>
-            )}
+                            group.messages[messageIndex + 1]?.senderId !== message.senderId;
+                          
+                          return (
+                            <MessageBubble
+                              key={message.id}
+                              message={message}
+                              isSent={isSent}
+                              isLastInGroup={isLastInGroup}
+                              showTimestamp={isLastInGroup}
+                              onReact={(emoji) => handleReact(message.id, emoji)}
+                            />
+                          );
+                        })}
+                      </div>
+                    </React.Fragment>
+                  ))}
+                  {isTyping && <TypingIndicator />}
+                </>
+              )}
+            </div>
           </div>
-        </ScrollArea>
-
-        {/* Jump to bottom button (shown when scrolled up) */}
-        <div className="pointer-events-none absolute bottom-20 left-1/2 -translate-x-1/2">
-          {/* This would be shown conditionally when scrolled up */}
         </div>
 
         {/* Message Input */}
-        <div className="border-t border-border p-4">
-          <div className="flex items-center gap-2">
-            <Input
+        <div style={{ padding: "8px 0 0" }}>
+          <div 
+            className="flex items-center"
+            style={{
+              border: "1px solid #E8E5DF",
+              borderRadius: "100px",
+              padding: "12px 4px 12px 16px"
+            }}
+          >
+            <input
               ref={inputRef}
+              type="text"
               placeholder="Type any message..."
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="h-11 flex-1"
+              className="flex-1 bg-transparent text-xs outline-none"
+              style={{ 
+                color: "#111625",
+              }}
             />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0">
-                  <Paperclip className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Attach file</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0">
-                  <Smile className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Emoji</TooltipContent>
-            </Tooltip>
-            <Button
-              onClick={handleSend}
-              disabled={!messageInput.trim()}
-              size="icon"
-              className="h-11 w-11 shrink-0"
-            >
-              <Send className="h-5 w-5" />
-            </Button>
+            
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="flex items-center justify-center w-6 h-6 rounded-full">
+                    <Mic className="h-3.5 w-3.5" style={{ color: "#262626" }} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Voice message</TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="flex items-center justify-center w-6 h-6 rounded-full">
+                    <Smile className="h-3.5 w-3.5" style={{ color: "#262626" }} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Emoji</TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="flex items-center justify-center w-6 h-6 rounded-full">
+                    <Paperclip className="h-3.5 w-3.5" style={{ color: "#262626" }} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Attach file</TooltipContent>
+              </Tooltip>
+              
+              <button
+                onClick={handleSend}
+                disabled={!messageInput.trim()}
+                className="flex items-center justify-center disabled:opacity-50"
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  background: "#1E9A80",
+                  borderRadius: "100px"
+                }}
+              >
+                <Send className="h-4 w-4" style={{ color: "#FFFFFF" }} />
+              </button>
+            </div>
           </div>
         </div>
       </div>

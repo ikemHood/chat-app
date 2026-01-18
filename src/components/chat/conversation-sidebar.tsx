@@ -66,8 +66,8 @@ function ConversationItem({
       className={cn(
         "flex w-full items-start gap-3 rounded-lg p-3 text-left transition-colors",
         isSelected
-          ? "bg-sidebar-accent"
-          : "hover:bg-muted/50"
+          ? "bg-[#F0FDF4]"
+          : "hover:bg-[#F7F9FB]"
       )}
     >
       {/* Avatar with online indicator */}
@@ -79,33 +79,33 @@ function ConversationItem({
           </AvatarFallback>
         </Avatar>
         {conversation.user.isOnline && (
-          <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background bg-online" />
+          <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-[#1E9A80]" />
         )}
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-hidden">
         <div className="flex items-center justify-between gap-2">
-          <span className="truncate font-medium text-foreground">
+          <span className="truncate font-medium" style={{ color: "#111625" }}>
             {conversation.user.name}
           </span>
           {conversation.lastMessage && (
-            <span className="shrink-0 text-xs text-muted-foreground">
+            <span className="shrink-0 text-xs" style={{ color: "#8796AF" }}>
               {formatTimestamp(conversation.lastMessage.timestamp)}
             </span>
           )}
         </div>
         <div className="flex items-center justify-between gap-2 mt-0.5">
-          <p className="truncate text-sm text-muted-foreground">
+          <p className="truncate text-sm" style={{ color: "#596881" }}>
             {conversation.lastMessage?.content ?? "No messages yet"}
           </p>
           {conversation.unreadCount > 0 && (
-            <Badge variant="default" className="h-5 min-w-5 shrink-0 rounded-full px-1.5 text-[10px] font-semibold">
+            <Badge variant="default" className="h-5 min-w-5 shrink-0 rounded-full px-1.5 text-[10px] font-semibold" style={{ background: "#1E9A80" }}>
               {conversation.unreadCount > 99 ? "99+" : conversation.unreadCount}
             </Badge>
           )}
           {conversation.lastMessage?.isRead && conversation.lastMessage?.isSent && (
-            <span className="shrink-0 text-xs text-primary">✓✓</span>
+            <span className="shrink-0 text-xs" style={{ color: "#1E9A80" }}>✓✓</span>
           )}
         </div>
       </div>
@@ -135,29 +135,35 @@ export function ConversationSidebar({
   isLoading,
 }: ConversationSidebarProps) {
   return (
-    <div className="flex h-full w-72 flex-col border-r border-border bg-sidebar">
+    <div className="flex h-full w-80 flex-col" style={{ background: "#FFFFFF" }}>
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border p-4">
-        <h2 className="text-lg font-semibold text-foreground">All Message</h2>
-        <Button size="sm" onClick={onNewMessage} className="gap-1.5">
+      <div className="flex items-center justify-between border-b border-[#E8E5DF] px-6 py-4">
+        <h2 className="text-lg font-semibold" style={{ color: "#111625" }}>All Message</h2>
+        <Button size="sm" onClick={onNewMessage} className="gap-1.5" style={{ background: "#1E9A80" }}>
           <Plus className="h-4 w-4" />
           New Message
         </Button>
       </div>
 
       {/* Search */}
-      <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+      <div className="flex items-center gap-2 border-b border-[#E8E5DF] px-6 py-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "#8796AF" }} />
+          <input
+            type="text"
             placeholder="Search in message"
             value={searchQuery}
             onChange={(e) => onSearchChange?.(e.target.value)}
-            className="h-9 pl-9"
+            className="h-9 w-full rounded-lg border pl-9 text-sm outline-none"
+            style={{ 
+              border: "1px solid #E8E5DF",
+              color: "#111625",
+              background: "#FFFFFF"
+            }}
           />
         </div>
         <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0">
-          <Filter className="h-4 w-4" />
+          <Filter className="h-4 w-4" style={{ color: "#596881" }} />
         </Button>
       </div>
 
