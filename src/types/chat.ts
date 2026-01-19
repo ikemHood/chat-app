@@ -107,6 +107,7 @@ export interface ChatLayoutProps {
     onLoadMoreUsers?: () => void;
     onSearchUsers?: (query: string) => void;
     onArchive?: (conversationId: string) => void;
+    onUnarchive?: (conversationId: string) => void;
     onMute?: (conversationId: string) => void;
     onPin?: (conversationId: string) => void;
     onClearChat?: (conversationId: string) => void;
@@ -124,6 +125,7 @@ export interface ChatAreaProps {
     onSendMessage?: (content: string) => void;
     onOpenContactInfo?: () => void;
     onReact?: (messageId: string, emoji: string) => void;
+    onTyping?: () => void;
     isTyping?: boolean;
     isLoading?: boolean;
     onClearChat?: () => void;

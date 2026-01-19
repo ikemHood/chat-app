@@ -81,7 +81,21 @@ export async function handleWsMessage(
                 data: { updatedAt: new Date() },
             });
 
-            // Publish via PubSub
+            // Send message directly to receiver's WebSocket
+            sendToUser(receiverId, {
+                type: "CHAT",
+                payload: {
+                    id: savedMsg.id,
+                    content,
+                    senderId: userId,
+                    receiverId,
+                    createdAt: savedMsg.createdAt.toISOString(),
+                    delivered: true,
+                    read: false,
+                },
+            });
+
+            // Publish via PubSub (for other server instances)
             await publishMessage({
                 type: "NEW_MESSAGE",
                 messageId: savedMsg.id,
@@ -160,6 +174,17 @@ export async function handleWsMessage(
 
         case "TYPING": {
             const { receiverId, isTyping } = data.payload;
+
+            // Send directly to receiver's WebSocket (same instance)
+            sendToUser(receiverId, {
+                type: "TYPING",
+                payload: {
+                    userId,
+                    isTyping,
+                },
+            });
+
+            // Also publish via PubSub for other instances
             await publishTyping({
                 type: "TYPING",
                 userId,

@@ -7,9 +7,9 @@ import {
   SearchIcon, 
   FilterIcon, 
   PencilPlusIcon,
-  type MessageItemData 
 } from "./swipeable-message-item";
-import { NewMessagePopup, type User } from "./new-message";
+import { NewMessagePopup } from "./new-message";
+import type { MessageItemData, User } from "@/types";
 
 interface MessageListProps {
   messages: MessageItemData[];

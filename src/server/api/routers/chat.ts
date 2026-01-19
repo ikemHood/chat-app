@@ -4,6 +4,7 @@ import { TRPCError } from "@trpc/server";
 import type { Prisma, PrismaClient } from "../../../../generated/prisma";
 import { AI_BOT_ID } from "@/constants";
 import { generateAIResponse } from "@/server/ai";
+import { publishMessage } from "@/server/pubsub";
 
 // Helper to get or create conversation between two users
 async function getOrCreateConversation(
@@ -242,7 +243,7 @@ export const chatRouter = createTRPCRouter({
                     try {
                         const response = await generateAIResponse(input.content);
 
-                        await ctx.db.message.create({
+                        const aiMessage = await ctx.db.message.create({
                             data: {
                                 conversationId: conversation.id,
                                 senderId: AI_BOT_ID,
@@ -255,6 +256,16 @@ export const chatRouter = createTRPCRouter({
                         await ctx.db.conversation.update({
                             where: { id: conversation.id },
                             data: { updatedAt: new Date() },
+                        });
+
+                        // Publish AI message to WebSocket
+                        await publishMessage({
+                            type: "NEW_MESSAGE",
+                            messageId: aiMessage.id,
+                            senderId: AI_BOT_ID,
+                            receiverId: userId,
+                            content: response,
+                            createdAt: aiMessage.createdAt.toISOString(),
                         });
                     } catch (e) {
                         console.error("AI response error:", e);

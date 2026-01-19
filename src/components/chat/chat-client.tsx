@@ -27,28 +27,23 @@ function playNotificationSound() {
 }
 
 export function ChatClient({ initialUser }: ChatClientProps) {
-  // ---/ State /---
   const [selectedConversation, setSelectedConversation] = useState<Conversation | undefined>();
   const [messages, setMessages] = useState<Message[]>([]);
   const [peerTyping, setPeerTyping] = useState<Record<string, boolean>>({});
   const [userStatuses, setUserStatuses] = useState<Record<string, boolean>>({});
-  
-  // Typing indicator debounce
+
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastTypingSent = useRef<number>(0);
+  
+  const peerTypingTimeouts = useRef<Record<string, NodeJS.Timeout>>({});
 
-  // tRPC utils for direct queries
   const utils = api.useUtils();
 
-  // ---/ Queries /---
-  
-  // 1. Get Conversations
   const { data: conversationsData, isLoading: isLoadingConversations, refetch: refetchConversations } = 
     api.chat.getConversations.useQuery(undefined, {
-      refetchInterval: 10000, // Poll every 10s as backup
+      refetchInterval: 10000, 
     });
     
-  // Format conversations with live status updates
   const conversations: Conversation[] = useMemo(() => {
     if (!conversationsData) return [];
     return conversationsData.map(c => ({
@@ -70,7 +65,6 @@ export function ChatClient({ initialUser }: ChatClientProps) {
     }));
   }, [conversationsData, initialUser.id, userStatuses]);
 
-  // 2. Get All Users for new message popup
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const { data: allUsersData, isLoading: isLoadingUsers, fetchNextPage, hasNextPage } = 
     api.user.getAllUsers.useInfiniteQuery(
@@ -92,7 +86,6 @@ export function ChatClient({ initialUser }: ChatClientProps) {
     ) ?? [];
   }, [allUsersData, userStatuses]);
 
-  // 3. Get Messages for selected conversation
   const { data: messagesData, isLoading: isLoadingMessages, refetch: refetchMessages } = 
     api.chat.getMessages.useQuery(
       { peerId: selectedConversation?.user.id ?? "" },
@@ -117,10 +110,12 @@ export function ChatClient({ initialUser }: ChatClientProps) {
     }
   }, [messagesData]);
 
-  // ---/ Mutations /---
   const markReadMutation = api.chat.markRead.useMutation();
   const toggleReactionMutation = api.chat.toggleReaction.useMutation();
   const archiveMutation = api.chat.archiveConversation.useMutation({
+    onSuccess: () => void refetchConversations(),
+  });
+  const unarchiveMutation = api.chat.unarchiveConversation.useMutation({
     onSuccess: () => void refetchConversations(),
   });
   const togglePinMutation = api.chat.togglePin.useMutation({
@@ -267,7 +262,20 @@ export function ChatClient({ initialUser }: ChatClientProps) {
           
           case "TYPING": {
             const { userId, isTyping } = data.payload;
+            
+            // Clear existing timeout for this user
+            if (peerTypingTimeouts.current[userId]) {
+              clearTimeout(peerTypingTimeouts.current[userId]);
+            }
+            
             setPeerTyping(prev => ({ ...prev, [userId]: isTyping }));
+            
+            // Auto-clear after 3 seconds if still typing (in case stop message is missed)
+            if (isTyping) {
+              peerTypingTimeouts.current[userId] = setTimeout(() => {
+                setPeerTyping(prev => ({ ...prev, [userId]: false }));
+              }, 3000);
+            }
             break;
           }
           
@@ -445,6 +453,10 @@ export function ChatClient({ initialUser }: ChatClientProps) {
     }
   };
 
+  const handleUnarchive = (conversationId: string) => {
+    unarchiveMutation.mutate({ conversationId });
+  };
+
   const handlePin = (conversationId: string) => {
     togglePinMutation.mutate({ conversationId });
   };
@@ -462,10 +474,10 @@ export function ChatClient({ initialUser }: ChatClientProps) {
   };
 
   const handleExportChat = async (conversationId: string) => {
-    // Use tRPC to fetch export data
+    console.log('[Export] Starting export for conversation:', conversationId);
     try {
       const result = await utils.chat.exportChat.fetch({ conversationId });
-      if (result.messages.length === 0) return;
+      console.log('[Export] Fetched data:', result.messages.length, 'messages');
       
       const exportData = {
         exportedAt: new Date().toISOString(),
@@ -477,13 +489,20 @@ export function ChatClient({ initialUser }: ChatClientProps) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `chat-${result.peer?.name ?? 'export'}-${new Date().toISOString().split('T')[0]}.json`;
+      // Sanitize filename - remove special chars
+      const safeName = (result.peer?.name ?? 'export').replace(/[^a-zA-Z0-9-_]/g, '_');
+      a.download = `chat-${safeName}-${new Date().toISOString().split('T')[0]}.json`;
+      a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      console.log('[Export] Download triggered');
+      // Small delay before cleanup
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
     } catch (e) {
-      console.error('Export failed:', e);
+      console.error('[Export] Failed:', e);
     }
   };
 
@@ -509,6 +528,7 @@ export function ChatClient({ initialUser }: ChatClientProps) {
       onLoadMoreUsers={hasNextPage ? () => fetchNextPage() : undefined}
       onSearchUsers={setUserSearchQuery}
       onArchive={handleArchive}
+      onUnarchive={handleUnarchive}
       onMute={handleMute}
       onPin={handlePin}
       onClearChat={handleClearChat}

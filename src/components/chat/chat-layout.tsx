@@ -36,6 +36,7 @@ export function ChatLayout({
   onLoadMoreUsers,
   onSearchUsers,
   onArchive,
+  onUnarchive,
   onMute,
   onPin,
   onClearChat,
@@ -158,8 +159,11 @@ export function ChatLayout({
               onArchive={(id) => onArchive?.(id)}
               onMarkUnread={(id) => console.log("Mark unread:", id)}
               onMute={(id) => onMute?.(id)}
-              onDelete={(id) => console.log("Delete:", id)}
+              onDelete={(id) => onDeleteChat?.(id)}
               onPin={(id) => onPin?.(id)}
+              onContactInfo={() => setIsContactInfoOpen(true)}
+              onExport={(id) => onExportChat?.(id)}
+              onClear={(id) => onClearChat?.(id)}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               isLoading={isLoadingConversations}
@@ -174,6 +178,7 @@ export function ChatLayout({
             onSendMessage={onSendMessage}
             onOpenContactInfo={() => setIsContactInfoOpen(true)}
             onReact={onReact}
+            onTyping={onTyping}
             isTyping={isTyping}
             isLoading={isLoadingMessages}
             onClearChat={selectedConversation ? () => onClearChat?.(selectedConversation.id) : undefined}

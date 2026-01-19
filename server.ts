@@ -31,6 +31,12 @@ async function startServer(): Promise<void> {
     await app.prepare();
     await pubsub.connect();
 
+    await db.user.updateMany({
+        where: { isOnline: true },
+        data: { isOnline: false },
+    });
+    console.log("> Reset all users to offline status");
+
     // Initialize JWKS for JWT verification
     initJwks(hostname, port);
 

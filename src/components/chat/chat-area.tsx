@@ -285,6 +285,7 @@ export function ChatArea({
   onSendMessage,
   onReact,
   onOpenContactInfo,
+  onTyping,
   isTyping,
   isLoading,
   onClearChat,
@@ -594,7 +595,10 @@ export function ChatArea({
               type="text"
               placeholder="Type any message..."
               value={messageInput}
-              onChange={(e) => setMessageInput(e.target.value)}
+              onChange={(e) => {
+                setMessageInput(e.target.value);
+                onTyping?.();
+              }}
               onKeyDown={handleKeyDown}
               className="flex-1 bg-transparent text-xs outline-none"
               style={{ 
