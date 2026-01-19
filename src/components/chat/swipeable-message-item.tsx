@@ -13,8 +13,6 @@ import {
 import type { SwipeableMessageItemProps } from "@/types";
 import { SWIPE_THRESHOLD, ACTION_WIDTH } from "@/constants";
 
-export type { MessageItemUser, MessageItemData } from "@/types";
-
 // Archive icon
 function ArchiveIcon({ className }: { className?: string }) {
   return (

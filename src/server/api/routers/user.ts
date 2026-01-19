@@ -4,7 +4,6 @@ import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { AI_BOT_ID } from "@/constants";
 
 export const userRouter = createTRPCRouter({
-    // Get all users for new message popup (infinite scroll)
     getAllUsers: protectedProcedure
         .input(z.object({
             limit: z.number().min(1).max(50).default(20),

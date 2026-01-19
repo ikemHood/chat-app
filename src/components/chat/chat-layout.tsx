@@ -17,7 +17,6 @@ import type {
   ChatLayoutProps,
   ChatUser,
 } from "@/types";
-export type { User, Conversation, Message } from "@/types";
 
 export function ChatLayout({
   user,
@@ -39,6 +38,9 @@ export function ChatLayout({
   onArchive,
   onMute,
   onPin,
+  onClearChat,
+  onExportChat,
+  onDeleteChat,
 }: ChatLayoutProps) {
   const router = useRouter();
   const [activeNav, setActiveNav] = useState<"home" | "messages" | "compass" | "folder" | "images">("messages");
@@ -174,6 +176,9 @@ export function ChatLayout({
             onReact={onReact}
             isTyping={isTyping}
             isLoading={isLoadingMessages}
+            onClearChat={selectedConversation ? () => onClearChat?.(selectedConversation.id) : undefined}
+            onExportChat={selectedConversation ? () => onExportChat?.(selectedConversation.id) : undefined}
+            onDeleteChat={selectedConversation ? () => onDeleteChat?.(selectedConversation.id) : undefined}
           />
         </div>
       </div>

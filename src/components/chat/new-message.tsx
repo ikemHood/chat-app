@@ -6,7 +6,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SearchIcon } from "./swipeable-message-item";
 import type { User } from "@/types";
-export type { User } from "@/types";
 
 interface NewMessagePopupProps {
   users: User[];

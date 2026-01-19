@@ -3,6 +3,7 @@ import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { TRPCError } from "@trpc/server";
 import type { Prisma, PrismaClient } from "../../../../generated/prisma";
 import { AI_BOT_ID } from "@/constants";
+import { generateAIResponse } from "@/server/ai";
 
 // Helper to get or create conversation between two users
 async function getOrCreateConversation(
@@ -10,7 +11,6 @@ async function getOrCreateConversation(
     user1Id: string,
     user2Id: string
 ) {
-    // Ensure consistent ordering for unique constraint
     const sortedIds = [user1Id, user2Id].sort();
     const firstId = sortedIds[0]!;
     const secondId = sortedIds[1]!;
@@ -160,7 +160,7 @@ export const chatRouter = createTRPCRouter({
     getMessages: protectedProcedure
         .input(z.object({
             conversationId: z.string().optional(),
-            peerId: z.string().optional(), // For backward compatibility
+            peerId: z.string().optional(),
             limit: z.number().min(1).max(50).default(50),
             cursor: z.string().optional(),
         }))
@@ -240,7 +240,6 @@ export const chatRouter = createTRPCRouter({
             if (input.receiverId === AI_BOT_ID) {
                 void (async () => {
                     try {
-                        const { generateAIResponse } = await import("@/server/ai");
                         const response = await generateAIResponse(input.content);
 
                         await ctx.db.message.create({
@@ -467,5 +466,136 @@ export const chatRouter = createTRPCRouter({
             });
 
             return { success: true, muted: !currentMuted };
+        }),
+
+    // Clear all messages in a conversation (keeps conversation)
+    clearChat: protectedProcedure
+        .input(z.object({
+            conversationId: z.string().optional(),
+            peerId: z.string().optional(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const userId = ctx.session.user.id;
+            let conversationId = input.conversationId;
+
+            if (!conversationId && input.peerId) {
+                const sortedIds = [userId, input.peerId].sort();
+                const conversation = await ctx.db.conversation.findUnique({
+                    where: { user1Id_user2Id: { user1Id: sortedIds[0]!, user2Id: sortedIds[1]! } },
+                });
+                conversationId = conversation?.id;
+            }
+
+            if (!conversationId) {
+                return { success: false };
+            }
+
+            // Verify user is part of conversation
+            const conversation = await ctx.db.conversation.findUnique({
+                where: { id: conversationId },
+            });
+
+            if (!conversation || (conversation.user1Id !== userId && conversation.user2Id !== userId)) {
+                throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+            }
+
+            // Delete all messages in the conversation
+            await ctx.db.message.deleteMany({
+                where: { conversationId },
+            });
+
+            return { success: true };
+        }),
+
+    // Export all messages in a conversation
+    exportChat: protectedProcedure
+        .input(z.object({
+            conversationId: z.string().optional(),
+            peerId: z.string().optional(),
+        }))
+        .query(async ({ ctx, input }) => {
+            const userId = ctx.session.user.id;
+            let conversationId = input.conversationId;
+
+            if (!conversationId && input.peerId) {
+                const sortedIds = [userId, input.peerId].sort();
+                const conversation = await ctx.db.conversation.findUnique({
+                    where: { user1Id_user2Id: { user1Id: sortedIds[0]!, user2Id: sortedIds[1]! } },
+                });
+                conversationId = conversation?.id;
+            }
+
+            if (!conversationId) {
+                return { messages: [], peer: null };
+            }
+
+            // Verify user is part of conversation
+            const conversation = await ctx.db.conversation.findUnique({
+                where: { id: conversationId },
+                include: {
+                    user1: { select: { id: true, name: true, email: true } },
+                    user2: { select: { id: true, name: true, email: true } },
+                },
+            });
+
+            if (!conversation || (conversation.user1Id !== userId && conversation.user2Id !== userId)) {
+                throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+            }
+
+            const peer = conversation.user1Id === userId ? conversation.user2 : conversation.user1;
+
+            const messages = await ctx.db.message.findMany({
+                where: { conversationId },
+                orderBy: { createdAt: "asc" },
+                select: {
+                    id: true,
+                    content: true,
+                    senderId: true,
+                    createdAt: true,
+                    read: true,
+                    delivered: true,
+                },
+            });
+
+            return { messages, peer };
+        }),
+
+    // Delete entire conversation (hard delete)
+    deleteConversation: protectedProcedure
+        .input(z.object({
+            conversationId: z.string().optional(),
+            peerId: z.string().optional(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const userId = ctx.session.user.id;
+            let conversationId = input.conversationId;
+
+            if (!conversationId && input.peerId) {
+                const sortedIds = [userId, input.peerId].sort();
+                const conversation = await ctx.db.conversation.findUnique({
+                    where: { user1Id_user2Id: { user1Id: sortedIds[0]!, user2Id: sortedIds[1]! } },
+                });
+                conversationId = conversation?.id;
+            }
+
+            if (!conversationId) {
+                return { success: false };
+            }
+
+            // Verify user is part of conversation
+            const conversation = await ctx.db.conversation.findUnique({
+                where: { id: conversationId },
+            });
+
+            if (!conversation || (conversation.user1Id !== userId && conversation.user2Id !== userId)) {
+                throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+            }
+
+            // Delete conversation (messages cascade due to schema)
+            await ctx.db.conversation.delete({
+                where: { id: conversationId },
+            });
+
+            return { success: true };
         }),
 });

@@ -1,37 +1,22 @@
-/**
- * Custom Bun Server with WebSocket support
- * Uses Node.js http module for Next.js compatibility
- * WebSocket runs on a separate port for simplicity
- */
-
 import "dotenv/config";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import next from "next";
 import type { ServerWebSocket } from "bun";
 import { auth } from "./src/server/better-auth/config";
 import { db } from "./src/server/db";
+import { pubsub, publishStatus } from "./src/server/pubsub";
+import type { WsData, WsIncomingMessage } from "./src/types/websocket";
+
+// Import modularized helpers
 import {
-    pubsub,
-    CHANNELS,
-    publishMessage,
-    publishStatus,
-    publishTyping,
-    publishDelivery,
-    type ChatMessagePayload,
-    type TypingPayload,
-    type DeliveryPayload,
-    type ReactionPayload,
-} from "./src/server/pubsub";
-import { generateAIResponse } from "./src/server/ai";
-import type {
-    WsData,
-    WsOutgoingMessage,
-    WsChatMessage,
-    WsTypingMessage,
-    WsReadMessage,
-    WsIncomingMessage,
-} from "./src/types/websocket";
-import { AI_BOT_ID } from "./src/constants";
+    initJwks,
+    verifyJwtToken,
+    registerClient,
+    unregisterClient,
+    setupPubSubHandlers,
+    handleWsMessage,
+    markMessagesDelivered,
+} from "./server/api/wshelpers";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
@@ -42,134 +27,14 @@ const wsPort = parseInt(process.env.WS_PORT ?? "3001", 10);
 const app = next({ dev, hostname, port });
 const nextHandler = app.getRequestHandler();
 
-// Map userId -> Set<WebSocket>
-const clients = new Map<string, Set<ServerWebSocket<WsData>>>();
-
-// Send message to a specific user (all their connected tabs)
-function sendToUser(userId: string, data: WsOutgoingMessage): void {
-    const sockets = clients.get(userId);
-    if (sockets) {
-        const msg = JSON.stringify(data);
-        for (const ws of sockets) {
-            ws.send(msg);
-        }
-    }
-}
-
-// Broadcast to all connected clients
-function broadcast(data: WsOutgoingMessage): void {
-    const msg = JSON.stringify(data);
-    for (const userSockets of clients.values()) {
-        for (const ws of userSockets) {
-            ws.send(msg);
-        }
-    }
-}
-
-// Handle incoming PubSub messages and relay to connected WebSocket clients
-function setupPubSubHandlers(): void {
-    // Chat messages
-    pubsub.subscribe(CHANNELS.CHAT_MESSAGE, (payload) => {
-        const msg = payload as ChatMessagePayload;
-        // Send to receiver
-        sendToUser(msg.receiverId, {
-            type: "CHAT",
-            payload: {
-                id: msg.messageId,
-                content: msg.content,
-                senderId: msg.senderId,
-                receiverId: msg.receiverId,
-                createdAt: msg.createdAt,
-            },
-        });
-        // Send ack to sender (in case they have multiple tabs)
-        sendToUser(msg.senderId, {
-            type: "CHAT_SENT",
-            payload: {
-                id: msg.messageId,
-                receiverId: msg.receiverId,
-            },
-        });
-    });
-
-    // User status changes
-    pubsub.subscribe(CHANNELS.USER_STATUS, (payload) => {
-        broadcast({
-            type: "STATUS",
-            payload: {
-                userId: (payload as { userId: string }).userId,
-                isOnline: (payload as { isOnline: boolean }).isOnline,
-            },
-        });
-    });
-
-    // Typing indicators
-    pubsub.subscribe(CHANNELS.TYPING, (payload) => {
-        const msg = payload as TypingPayload;
-        sendToUser(msg.peerId, {
-            type: "TYPING",
-            payload: {
-                userId: msg.userId,
-                isTyping: msg.isTyping,
-            },
-        });
-    });
-
-    // Delivery/Read receipts
-    pubsub.subscribe(CHANNELS.DELIVERY, (payload) => {
-        const msg = payload as DeliveryPayload;
-        sendToUser(msg.peerId, {
-            type: msg.type === "READ" ? "READ_RECEIPT" : "DELIVERED",
-            payload: {
-                messageId: msg.messageId,
-                timestamp: msg.timestamp,
-            },
-        });
-    });
-
-    // Reactions
-    pubsub.subscribe(CHANNELS.REACTION, (payload) => {
-        const msg = payload as ReactionPayload;
-        // Broadcast to both sender and receiver of the message
-        // For simplicity, we broadcast to all for now
-        broadcast({
-            type: "REACTION",
-            payload: msg,
-        });
-    });
-}
-
-// Mark undelivered messages as delivered when user connects
-async function markMessagesDelivered(userId: string): Promise<void> {
-    const now = new Date();
-
-    // Find all conversations where this user is a participant
-    const conversations = await db.conversation.findMany({
-        where: {
-            OR: [{ user1Id: userId }, { user2Id: userId }],
-        },
-        select: { id: true },
-    });
-
-    const conversationIds = conversations.map(c => c.id);
-
-    // Mark messages in those conversations where user is NOT the sender
-    await db.message.updateMany({
-        where: {
-            conversationId: { in: conversationIds },
-            senderId: { not: userId },
-            delivered: false,
-        },
-        data: {
-            delivered: true,
-            deliveredAt: now,
-        },
-    });
-}
-
 async function startServer(): Promise<void> {
     await app.prepare();
     await pubsub.connect();
+
+    // Initialize JWKS for JWT verification
+    initJwks(hostname, port);
+
+    // Setup PubSub handlers
     setupPubSubHandlers();
 
     // Create Node.js HTTP server for Next.js
@@ -194,23 +59,17 @@ async function startServer(): Promise<void> {
             const url = new URL(req.url);
 
             if (url.pathname === "/ws") {
-                // Get token from query parameter (for cross-port auth)
+                // Get JWT token from query parameter
                 const token = url.searchParams.get("token");
 
                 let userId: string | null = null;
 
                 if (token) {
-                    // Verify token by looking up session in database
-                    const session = await db.session.findFirst({
-                        where: {
-                            token,
-                            expiresAt: { gt: new Date() },
-                        },
-                        select: { userId: true },
-                    });
-
-                    if (session) {
-                        userId = session.userId;
+                    // Verify JWT token using JWKS
+                    const verified = await verifyJwtToken(token);
+                    if (verified) {
+                        userId = verified.userId;
+                        console.log(`[WS] JWT verified for user: ${userId}`);
                     }
                 }
 
@@ -220,10 +79,13 @@ async function startServer(): Promise<void> {
                         headers: req.headers,
                     });
                     userId = session?.user?.id ?? null;
+                    if (userId) {
+                        console.log(`[WS] Cookie auth for user: ${userId}`);
+                    }
                 }
 
                 if (!userId) {
-                    console.log("[WS] Authentication failed - no valid session");
+                    console.log("[WS] Authentication failed - no valid token or session");
                     return new Response("Unauthorized", { status: 401 });
                 }
 
@@ -243,13 +105,10 @@ async function startServer(): Promise<void> {
             async open(ws) {
                 const userId = ws.data.userId;
 
-                // Register connection
-                if (!clients.has(userId)) {
-                    clients.set(userId, new Set());
-                }
-                clients.get(userId)!.add(ws);
+                // Register connection using modular helper
+                registerClient(userId, ws);
 
-                // Update user status to online
+                // Update user status to online in PostgreSQL
                 await db.user.update({
                     where: { id: userId },
                     data: { isOnline: true, lastSeen: new Date() },
@@ -276,163 +135,8 @@ async function startServer(): Promise<void> {
                         typeof message === "string" ? message : message.toString()
                     ) as WsIncomingMessage;
 
-                    switch (data.type) {
-                        case "CHAT": {
-                            const { receiverId, content, tempId } = data.payload;
-
-                            // Get or create conversation
-                            const sortedIds = [userId, receiverId].sort();
-                            const firstId = sortedIds[0]!;
-                            const secondId = sortedIds[1]!;
-                            let conversation = await db.conversation.findUnique({
-                                where: { user1Id_user2Id: { user1Id: firstId, user2Id: secondId } },
-                            });
-
-                            if (!conversation) {
-                                conversation = await db.conversation.create({
-                                    data: { user1Id: firstId, user2Id: secondId, settings: {} },
-                                });
-                            }
-
-                            // Save message
-                            const savedMsg = await db.message.create({
-                                data: {
-                                    conversationId: conversation.id,
-                                    senderId: userId,
-                                    content,
-                                    delivered: clients.has(receiverId),
-                                    deliveredAt: clients.has(receiverId) ? new Date() : null,
-                                },
-                            });
-
-                            // Update conversation timestamp
-                            await db.conversation.update({
-                                where: { id: conversation.id },
-                                data: { updatedAt: new Date() },
-                            });
-
-                            // Publish via PubSub
-                            await publishMessage({
-                                type: "NEW_MESSAGE",
-                                messageId: savedMsg.id,
-                                senderId: userId,
-                                receiverId,
-                                content,
-                                createdAt: savedMsg.createdAt.toISOString(),
-                            });
-
-                            // Send ack to sender
-                            sendToUser(userId, {
-                                type: "CHAT_ACK",
-                                payload: {
-                                    tempId,
-                                    message: savedMsg,
-                                    conversationId: conversation.id,
-                                },
-                            });
-
-                            // Handle AI bot response
-                            if (receiverId === AI_BOT_ID) {
-                                console.log(`[AI] User ${userId} is messaging AI bot`);
-                                void (async () => {
-                                    try {
-                                        console.log(`[AI] Generating response for: "${content.substring(0, 50)}..."`);
-                                        const aiResponse = await generateAIResponse(content);
-                                        console.log(`[AI] Got response: "${aiResponse.substring(0, 50)}..."`);
-
-                                        const aiMessage = await db.message.create({
-                                            data: {
-                                                conversationId: conversation.id,
-                                                senderId: AI_BOT_ID,
-                                                content: aiResponse,
-                                                delivered: true,
-                                                deliveredAt: new Date(),
-                                            },
-                                        });
-                                        console.log(`[AI] Saved message: ${aiMessage.id}`);
-
-                                        await db.conversation.update({
-                                            where: { id: conversation.id },
-                                            data: { updatedAt: new Date() },
-                                        });
-
-                                        // Send directly to user via WebSocket (immediate delivery)
-                                        sendToUser(userId, {
-                                            type: "CHAT",
-                                            payload: {
-                                                id: aiMessage.id,
-                                                content: aiResponse,
-                                                senderId: AI_BOT_ID,
-                                                receiverId: userId,
-                                                createdAt: aiMessage.createdAt.toISOString(),
-                                                delivered: true,
-                                                read: false,
-                                            },
-                                        });
-                                        console.log(`[AI] Sent to user ${userId} via WebSocket`);
-
-                                        // Also publish via PubSub for other instances
-                                        await publishMessage({
-                                            type: "NEW_MESSAGE",
-                                            messageId: aiMessage.id,
-                                            senderId: AI_BOT_ID,
-                                            receiverId: userId,
-                                            content: aiResponse,
-                                            createdAt: aiMessage.createdAt.toISOString(),
-                                        });
-                                    } catch (e) {
-                                        console.error("[AI] Response error:", e);
-                                    }
-                                })();
-                            }
-                            break;
-                        }
-
-                        case "TYPING": {
-                            const { receiverId, isTyping } = data.payload;
-                            await publishTyping({
-                                type: "TYPING",
-                                userId,
-                                peerId: receiverId,
-                                isTyping,
-                            });
-                            break;
-                        }
-
-                        case "READ": {
-                            const { peerId } = data.payload;
-
-                            // Find conversation
-                            const readSortedIds = [userId, peerId].sort();
-                            const conversation = await db.conversation.findUnique({
-                                where: { user1Id_user2Id: { user1Id: readSortedIds[0]!, user2Id: readSortedIds[1]! } },
-                            });
-
-                            if (conversation) {
-                                const now = new Date();
-                                await db.message.updateMany({
-                                    where: {
-                                        conversationId: conversation.id,
-                                        senderId: peerId,
-                                        read: false,
-                                    },
-                                    data: {
-                                        read: true,
-                                        readAt: now,
-                                    },
-                                });
-
-                                // Publish read receipt
-                                await publishDelivery({
-                                    type: "READ",
-                                    messageId: "",
-                                    peerId,
-                                    timestamp: now.toISOString(),
-                                });
-                            }
-                            break;
-                        }
-                    }
+                    // Handle message using modular helper
+                    await handleWsMessage(userId, data);
                 } catch (e) {
                     console.error("[WS] Message error:", e);
                 }
@@ -440,27 +144,24 @@ async function startServer(): Promise<void> {
 
             async close(ws) {
                 const userId = ws.data.userId;
-                const userSockets = clients.get(userId);
 
-                if (userSockets) {
-                    userSockets.delete(ws);
+                // Unregister using modular helper - returns true if last connection
+                const wasLastConnection = unregisterClient(userId, ws);
 
-                    if (userSockets.size === 0) {
-                        clients.delete(userId);
+                if (wasLastConnection) {
+                    // Update user status in PostgreSQL
+                    await db.user.update({
+                        where: { id: userId },
+                        data: { isOnline: false, lastSeen: new Date() },
+                    });
 
-                        await db.user.update({
-                            where: { id: userId },
-                            data: { isOnline: false, lastSeen: new Date() },
-                        });
+                    await publishStatus({
+                        type: "STATUS_CHANGE",
+                        userId,
+                        isOnline: false,
+                    });
 
-                        await publishStatus({
-                            type: "STATUS_CHANGE",
-                            userId,
-                            isOnline: false,
-                        });
-
-                        console.log(`[WS] User ${userId} disconnected`);
-                    }
+                    console.log(`[WS] User ${userId} disconnected`);
                 }
             },
         },

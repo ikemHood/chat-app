@@ -109,6 +109,9 @@ export interface ChatLayoutProps {
     onArchive?: (conversationId: string) => void;
     onMute?: (conversationId: string) => void;
     onPin?: (conversationId: string) => void;
+    onClearChat?: (conversationId: string) => void;
+    onExportChat?: (conversationId: string) => void;
+    onDeleteChat?: (conversationId: string) => void;
 }
 
 /**
@@ -123,6 +126,9 @@ export interface ChatAreaProps {
     onReact?: (messageId: string, emoji: string) => void;
     isTyping?: boolean;
     isLoading?: boolean;
+    onClearChat?: () => void;
+    onExportChat?: () => void;
+    onDeleteChat?: () => void;
 }
 
 /**

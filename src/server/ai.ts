@@ -1,9 +1,10 @@
 
 import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
+import { env } from "@/env";
 
 export async function generateAIResponse(message: string) {
-    if (!process.env.OPENAI_API_KEY) {
+    if (env.OPENAI_API_KEY) {
         return "Please configure OPENAI_API_KEY in .env to chat with me!";
     }
 

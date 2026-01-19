@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { jwt } from "better-auth/plugins";
 
 import { env } from "@/env";
 import { db } from "@/server/db";
@@ -11,7 +12,9 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-  // Only include GitHub provider if credentials are configured
+  plugins: [
+    jwt(),
+  ],
   socialProviders: {
     github: env.BETTER_AUTH_GITHUB_CLIENT_ID && env.BETTER_AUTH_GITHUB_CLIENT_SECRET
       ? {
@@ -26,14 +29,11 @@ export const auth = betterAuth({
       }
       : undefined,
   },
-  // Assign random avatar on user creation
   databaseHooks: {
     user: {
       create: {
         after: async (user) => {
-          // Only set avatar if user doesn't have one (e.g., from OAuth)
           if (!user.image) {
-            // Use user ID hash for consistent but unique avatar
             const seed = user.id.slice(-6);
             await db.user.update({
               where: { id: user.id },

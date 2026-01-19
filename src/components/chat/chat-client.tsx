@@ -10,13 +10,6 @@ import type {
   Message,
   User,
   ChatClientProps,
-  WsChatPayload,
-  WsTypingPayload,
-  WsStatusPayload,
-  WsDeliveredPayload,
-  WsReadReceiptPayload,
-  WsChatAckPayload,
-  WsReactionPayload,
   WsMessage,
 } from "@/types";
 
@@ -43,6 +36,9 @@ export function ChatClient({ initialUser }: ChatClientProps) {
   // Typing indicator debounce
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastTypingSent = useRef<number>(0);
+
+  // tRPC utils for direct queries
+  const utils = api.useUtils();
 
   // ---/ Queries /---
   
@@ -133,24 +129,65 @@ export function ChatClient({ initialUser }: ChatClientProps) {
   const toggleMuteMutation = api.chat.toggleMute.useMutation({
     onSuccess: () => void refetchConversations(),
   });
+  const clearChatMutation = api.chat.clearChat.useMutation({
+    onSuccess: () => {
+      void refetchConversations();
+      void refetchMessages();
+      setMessages([]);
+    },
+  });
+  const deleteChatMutation = api.chat.deleteConversation.useMutation({
+    onSuccess: () => {
+      void refetchConversations();
+      setSelectedConversation(undefined);
+      setMessages([]);
+    },
+  });
   
-  // Mark messages as read when viewing conversation
+  // Mark messages as read when viewing conversation (via WebSocket only)
   useEffect(() => {
-    if (selectedConversation && messages.some(m => m.senderId !== initialUser.id && m.status !== "read")) {
-      markReadMutation.mutate({ peerId: selectedConversation.user.id });
+    if (selectedConversation && wsRef.current?.readyState === WebSocket.OPEN && 
+        messages.some(m => m.senderId !== initialUser.id && m.status !== "read")) {
+      wsRef.current.send(JSON.stringify({ type: "READ", payload: { peerId: selectedConversation.user.id } }));
     }
-  }, [selectedConversation, messages, initialUser.id, markReadMutation]);
+  }, [selectedConversation?.user.id, messages, initialUser.id]);
 
   // ---/ WebSocket /---
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttempts = useRef(0);
+  
+  // Use refs for values that change but shouldn't trigger reconnection
+  const selectedConversationRef = useRef(selectedConversation);
+  const initialUserRef = useRef(initialUser);
+  
+  // Keep refs in sync
+  useEffect(() => {
+    selectedConversationRef.current = selectedConversation;
+  }, [selectedConversation]);
+  
+  useEffect(() => {
+    initialUserRef.current = initialUser;
+  }, [initialUser]);
 
   const connectWebSocket = useCallback(async () => {
-    // Get session for authentication
-    const session = await authClient.getSession();
-    if (!session?.data?.session) {
-      console.error("[WS] No session found, cannot connect");
+    // Close existing connection if any
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      console.log("[WS] Already connected, skipping");
+      return;
+    }
+    
+    console.log("[WS] Getting JWT token...");
+    // Get JWT token for authentication
+    const tokenResult = await authClient.token();
+    console.log("[WS] Token result:", { 
+      error: tokenResult.error, 
+      hasToken: !!tokenResult.data?.token,
+      tokenLength: tokenResult.data?.token?.length 
+    });
+    
+    if (tokenResult.error || !tokenResult.data?.token) {
+      console.error("[WS] Failed to get JWT token:", tokenResult.error);
       // Retry after delay
       const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
       reconnectAttempts.current++;
@@ -161,8 +198,10 @@ export function ChatClient({ initialUser }: ChatClientProps) {
     // WebSocket server runs on port 3001
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsHost = window.location.hostname;
-    // Pass session token as query parameter for cross-port auth
-    const wsUrl = `${protocol}//${wsHost}:3001/ws?token=${encodeURIComponent(session.data.session.token)}`;
+    
+    // Pass JWT token as query parameter for cross-port auth
+    const wsUrl = `${protocol}//${wsHost}:3001/ws?token=${encodeURIComponent(tokenResult.data.token)}`;
+    console.log("[WS] Connecting to:", wsUrl.substring(0, 50) + "...");
     
     const ws = new WebSocket(wsUrl);
     
@@ -175,14 +214,18 @@ export function ChatClient({ initialUser }: ChatClientProps) {
       try {
         const data = JSON.parse(event.data) as WsMessage;
         
+        // Use refs to get current values
+        const currentConversation = selectedConversationRef.current;
+        const currentUser = initialUserRef.current;
+        
         switch (data.type) {
           case "CHAT": {
             const msg = data.payload;
             
             // If message is for/from current conversation, add it
-            if (selectedConversation && 
-                (msg.senderId === selectedConversation.user.id || 
-                 msg.receiverId === selectedConversation.user.id)) {
+            if (currentConversation && 
+                (msg.senderId === currentConversation.user.id || 
+                 msg.receiverId === currentConversation.user.id)) {
               setMessages(prev => {
                 if (prev.find(m => m.id === msg.id)) return prev;
                 return [...prev, {
@@ -194,15 +237,14 @@ export function ChatClient({ initialUser }: ChatClientProps) {
                 }];
               });
               
-              // If incoming message and we're viewing, mark read
-              if (msg.senderId !== initialUser.id) {
-                markReadMutation.mutate({ peerId: msg.senderId });
+              // Mark as read via WebSocket only (server handles DB update)
+              if (msg.senderId !== currentUser.id) {
                 ws.send(JSON.stringify({ type: "READ", payload: { peerId: msg.senderId } }));
               }
             }
             
             // Play sound for incoming messages not in current view
-            if (msg.senderId !== initialUser.id && msg.senderId !== selectedConversation?.user.id) {
+            if (msg.senderId !== currentUser.id && msg.senderId !== currentConversation?.user.id) {
               playNotificationSound();
             }
             
@@ -246,9 +288,10 @@ export function ChatClient({ initialUser }: ChatClientProps) {
           
           case "READ_RECEIPT": {
             // Update message status
+            const userId = currentUser.id;
             setMessages(prev => prev.map(m => ({
               ...m,
-              status: m.senderId === initialUser.id ? "read" : m.status,
+              status: m.senderId === userId ? "read" : m.status,
             })));
             break;
           }
@@ -279,6 +322,7 @@ export function ChatClient({ initialUser }: ChatClientProps) {
     
     ws.onclose = () => {
       console.log("[WS] Disconnected");
+      wsRef.current = null;
       // Exponential backoff reconnect
       const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
       reconnectAttempts.current++;
@@ -290,8 +334,9 @@ export function ChatClient({ initialUser }: ChatClientProps) {
     };
     
     wsRef.current = ws;
-  }, [selectedConversation, initialUser.id, refetchConversations, markReadMutation]);
+  }, [refetchConversations]); // Removed selectedConversation, initialUser, and markReadMutation - using refs instead
 
+  // Connect WebSocket only once on mount
   useEffect(() => {
     void connectWebSocket();
     
@@ -299,9 +344,13 @@ export function ChatClient({ initialUser }: ChatClientProps) {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
-      wsRef.current?.close();
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
     };
-  }, [connectWebSocket]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ---/ Handlers /---
   
@@ -404,6 +453,40 @@ export function ChatClient({ initialUser }: ChatClientProps) {
     toggleMuteMutation.mutate({ conversationId });
   };
 
+  const handleClearChat = (conversationId: string) => {
+    clearChatMutation.mutate({ conversationId });
+  };
+
+  const handleDeleteChat = (conversationId: string) => {
+    deleteChatMutation.mutate({ conversationId });
+  };
+
+  const handleExportChat = async (conversationId: string) => {
+    // Use tRPC to fetch export data
+    try {
+      const result = await utils.chat.exportChat.fetch({ conversationId });
+      if (result.messages.length === 0) return;
+      
+      const exportData = {
+        exportedAt: new Date().toISOString(),
+        peer: result.peer,
+        messages: result.messages,
+      };
+      
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `chat-${result.peer?.name ?? 'export'}-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Export failed:', e);
+    }
+  };
+
   // Is current peer typing?
   const isTyping = selectedConversation ? peerTyping[selectedConversation.user.id] ?? false : false;
 
@@ -428,6 +511,9 @@ export function ChatClient({ initialUser }: ChatClientProps) {
       onArchive={handleArchive}
       onMute={handleMute}
       onPin={handlePin}
+      onClearChat={handleClearChat}
+      onExportChat={handleExportChat}
+      onDeleteChat={handleDeleteChat}
     />
   );
 }

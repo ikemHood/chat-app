@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { Message, ChatUser, ChatAreaProps } from "@/types";
 import { REACTION_OPTIONS } from "@/constants";
-export type { Message, ChatUser } from "@/types";
 
 function formatTime(date: Date): string {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -288,6 +287,9 @@ export function ChatArea({
   onOpenContactInfo,
   isTyping,
   isLoading,
+  onClearChat,
+  onExportChat,
+  onDeleteChat,
 }: ChatAreaProps) {
   const [messageInput, setMessageInput] = useState("");
   const [messagesState, setMessagesState] = useState(messages);
@@ -489,7 +491,18 @@ export function ChatArea({
                   </svg>
                 </DropdownMenuItem>
 
-                <DropdownMenuItem className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-[#F3F3EE] focus:bg-[#F3F3EE] focus:text-[#262626] outline-none">
+                <DropdownMenuItem className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-[#F3F3EE] focus:bg-[#F3F3EE] focus:text-[#262626] outline-none"
+                  onClick={onClearChat}
+                >
+                  <svg className="w-5 h-5 text-[#262626]" viewBox="0 0 20 20" fill="none">
+                    <path d="M5 5L15 15M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span className="text-sm font-medium text-[#262626]">Clear chat</span>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-[#F3F3EE] focus:bg-[#F3F3EE] focus:text-[#262626] outline-none"
+                  onClick={onExportChat}
+                >
                   <svg className="w-5 h-5 text-[#262626]" viewBox="0 0 20 20" fill="none">
                     <path d="M6.25 17.5H13.75C14.4404 17.5 15 16.9404 15 16.25V7.5L10 2.5H6.25C5.55964 2.5 5 3.05964 5 3.75V16.25C5 16.9404 5.55964 17.5 6.25 17.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M10 2.5V7.5H15M7.5 11.25L10 8.75L12.5 11.25M10 8.75V15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -497,7 +510,9 @@ export function ChatArea({
                   <span className="text-sm font-medium text-[#262626]">Export chat</span>
                 </DropdownMenuItem>
                 
-                <DropdownMenuItem className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-red-50 focus:bg-red-50 outline-none">
+                <DropdownMenuItem className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-red-50 focus:bg-red-50 outline-none"
+                  onClick={onDeleteChat}
+                >
                   <svg className="w-5 h-5 text-[#E53935]" viewBox="0 0 20 20" fill="none">
                     <path d="M3.75 5H16.25M7.5 5V3.75C7.5 3.05964 8.05964 2.5 8.75 2.5H11.25C11.9404 2.5 12.5 3.05964 12.5 3.75V5M15 5V16.25C15 16.9404 14.4404 17.5 13.75 17.5H6.25C5.55964 17.5 5 16.9404 5 16.25V5H15Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
