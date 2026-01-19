@@ -87,9 +87,8 @@ export function IconSidebar({
   return (
     <TooltipProvider delayDuration={0}>
       <div 
-        className="flex h-full flex-col items-center justify-between py-6 px-4"
+        className="flex h-full flex-col items-center justify-between py-6 px-2 md:px-4 w-[60px] md:w-[76px]"
         style={{ 
-          width: "76px",
           background: "#F3F3EE"
         }}
       >
@@ -97,7 +96,7 @@ export function IconSidebar({
         <div className="flex flex-col items-center gap-8">
           {/* Logo with Popover Menu */}
           <LogoMenu user={user}>
-            <div className="relative overflow-hidden rounded-full cursor-pointer hover:opacity-90 transition-opacity" style={{ width: "44px", height: "44px" }}>
+            <div className="relative overflow-hidden rounded-full cursor-pointer hover:opacity-90 transition-opacity w-9 h-9 md:w-11 md:h-11">
               <img 
                 src="/logo.png" 
                 alt="Logo" 
@@ -114,16 +113,11 @@ export function IconSidebar({
                   <button
                     className={cn(
                       "flex items-center justify-center rounded-lg transition-all",
-                      "w-11 h-11",
+                      "w-9 h-9 md:w-11 md:h-11",
                       activeItem === item.id 
                         ? "bg-[#F0FDF4] border border-[#1E9A80]" 
                         : "hover:bg-muted"
                     )}
-                    style={{ 
-                      minWidth: "44px",
-                      maxWidth: "44px",
-                      padding: "8px 12px"
-                    }}
                     onClick={() => onNavigate?.(item.id)}
                   >
                     <item.icon className="h-5 w-5 text-[#151515]" />
@@ -142,12 +136,7 @@ export function IconSidebar({
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                className="flex items-center justify-center rounded-lg w-11 h-11 hover:bg-muted transition-all"
-                style={{ 
-                  minWidth: "44px",
-                  maxWidth: "44px",
-                  padding: "8px 12px"
-                }}
+                className="flex items-center justify-center rounded-lg w-9 h-9 md:w-11 md:h-11 hover:bg-muted transition-all"
               >
                 <StarFourIcon className="h-5 w-5 text-[#151515]" />
               </button>
@@ -161,8 +150,7 @@ export function IconSidebar({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Avatar 
-                  className="cursor-pointer"
-                  style={{ width: "44px", height: "44px" }}
+                  className="cursor-pointer w-9 h-9 md:w-11 md:h-11"
                 >
                   <AvatarImage src={user.image} alt={user.name} />
                   <AvatarFallback className="text-sm">

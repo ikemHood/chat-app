@@ -1,9 +1,4 @@
 import { db } from "../../../src/server/db";
-import {
-    publishMessage,
-    publishTyping,
-    publishDelivery,
-} from "../../../src/server/pubsub";
 import { isUserConnected, sendToUser } from "./clients";
 import { generateAIResponse } from "../../../src/server/ai";
 import { AI_BOT_ID } from "../../../src/constants";
@@ -95,16 +90,6 @@ export async function handleWsMessage(
                 },
             });
 
-            // Publish via PubSub (for other server instances)
-            await publishMessage({
-                type: "NEW_MESSAGE",
-                messageId: savedMsg.id,
-                senderId: userId,
-                receiverId,
-                content,
-                createdAt: savedMsg.createdAt.toISOString(),
-            });
-
             // Send ack to sender
             sendToUser(userId, {
                 type: "CHAT_ACK",
@@ -155,15 +140,6 @@ export async function handleWsMessage(
                         });
                         console.log(`[AI] Sent to user ${userId} via WebSocket`);
 
-                        // Also publish via PubSub for other instances
-                        await publishMessage({
-                            type: "NEW_MESSAGE",
-                            messageId: aiMessage.id,
-                            senderId: AI_BOT_ID,
-                            receiverId: userId,
-                            content: aiResponse,
-                            createdAt: aiMessage.createdAt.toISOString(),
-                        });
                     } catch (e) {
                         console.error("[AI] Response error:", e);
                     }
@@ -182,14 +158,6 @@ export async function handleWsMessage(
                     userId,
                     isTyping,
                 },
-            });
-
-            // Also publish via PubSub for other instances
-            await publishTyping({
-                type: "TYPING",
-                userId,
-                peerId: receiverId,
-                isTyping,
             });
             break;
         }
@@ -216,15 +184,63 @@ export async function handleWsMessage(
                         readAt: now,
                     },
                 });
-
-                // Publish read receipt
-                await publishDelivery({
-                    type: "READ",
-                    messageId: "",
-                    peerId,
-                    timestamp: now.toISOString(),
-                });
             }
+            break;
+        }
+
+        case "REACTION": {
+            const { messageId, emoji, action } = data.payload;
+
+            // 1. Get the message to verify existence and get sender/receiver
+            const message = await db.message.findUnique({
+                where: { id: messageId },
+                include: { conversation: true }
+            });
+
+            if (!message) return;
+
+            // 2. Update reactions in DB
+            const reactions = (message.reactions as Record<string, string[]>) || {};
+            const userIds = reactions[emoji] || [];
+
+            let newUserIds = [...userIds];
+            if (action === "add" && !newUserIds.includes(userId)) {
+                newUserIds.push(userId);
+            } else if (action === "remove") {
+                newUserIds = newUserIds.filter(id => id !== userId);
+            }
+
+            const updatedReactions = {
+                ...reactions,
+                [emoji]: newUserIds
+            };
+
+            // Remove empty keys
+            if (newUserIds.length === 0) {
+                delete updatedReactions[emoji];
+            }
+
+            await db.message.update({
+                where: { id: messageId },
+                data: { reactions: updatedReactions },
+            });
+
+            // 3. Determine recipients (everyone in conversation)
+            const recipient1 = message.conversation.user1Id;
+            const recipient2 = message.conversation.user2Id;
+
+            // 4. Broadcast to both users
+            [recipient1, recipient2].forEach(recipientId => {
+                sendToUser(recipientId, {
+                    type: "REACTION",
+                    payload: {
+                        messageId,
+                        userId,
+                        emoji,
+                        action,
+                    },
+                });
+            });
             break;
         }
     }

@@ -1,5 +1,6 @@
 import type { ServerWebSocket } from "bun";
 import type { WsData, WsOutgoingMessage } from "../../../src/types/websocket";
+import { AI_BOT_ID } from "../../../src/constants";
 
 // Map userId -> Set<WebSocket>
 const clients = new Map<string, Set<ServerWebSocket<WsData>>>();
@@ -34,6 +35,7 @@ export function unregisterClient(userId: string, ws: ServerWebSocket<WsData>): b
  * Check if a user is currently connected
  */
 export function isUserConnected(userId: string): boolean {
+    if (userId === AI_BOT_ID) return true;
     return clients.has(userId);
 }
 

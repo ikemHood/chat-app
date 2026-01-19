@@ -110,8 +110,6 @@ export function ChatClient({ initialUser }: ChatClientProps) {
     }
   }, [messagesData]);
 
-  const markReadMutation = api.chat.markRead.useMutation();
-  const toggleReactionMutation = api.chat.toggleReaction.useMutation();
   const archiveMutation = api.chat.archiveConversation.useMutation({
     onSuccess: () => void refetchConversations(),
   });
@@ -443,7 +441,27 @@ export function ChatClient({ initialUser }: ChatClientProps) {
   };
 
   const handleReact = (messageId: string, emoji: string) => {
-    toggleReactionMutation.mutate({ messageId, emoji });
+    if (!selectedConversation || !wsRef.current) return;
+
+    // Find message to determine current state
+    const message = messages.find(m => m.id === messageId);
+    if (!message) return;
+
+    const currentReactions = message.reactions?.[emoji] ?? [];
+    const hasReacted = currentReactions.includes(initialUser.id);
+    const action = hasReacted ? "remove" : "add";
+
+    // Send via WebSocket (handles DB update and broadcast)
+    if (wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: "REACTION",
+        payload: {
+          messageId,
+          emoji,
+          action,
+        }
+      }));
+    }
   };
 
   const handleArchive = (conversationId: string) => {

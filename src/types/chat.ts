@@ -93,7 +93,7 @@ export interface ChatLayoutProps {
     user?: User;
     conversations: Conversation[];
     selectedConversation?: Conversation;
-    onSelectConversation?: (conversation: Conversation) => void;
+    onSelectConversation?: (conversation: Conversation | undefined) => void;
     isLoadingConversations?: boolean;
     messages: Message[];
     onSendMessage?: (content: string) => void;
@@ -131,6 +131,7 @@ export interface ChatAreaProps {
     onClearChat?: () => void;
     onExportChat?: () => void;
     onDeleteChat?: () => void;
+    onBack?: () => void;
 }
 
 /**

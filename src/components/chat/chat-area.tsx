@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useState, useRef, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Search, Phone, Video, MoreHorizontal, Smile, Paperclip, Send, Mic } from "lucide-react";
+import { Search, Phone, Video, MoreHorizontal, Smile, Paperclip, Send, Mic, ChevronLeft } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -291,6 +291,7 @@ export function ChatArea({
   onClearChat,
   onExportChat,
   onDeleteChat,
+  onBack,
 }: ChatAreaProps) {
   const [messageInput, setMessageInput] = useState("");
   const [messagesState, setMessagesState] = useState(messages);
@@ -415,6 +416,17 @@ export function ChatArea({
             onClick={onOpenContactInfo}
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
           >
+            {/* Back Button (Mobile only) */}
+            <div 
+               className="md:hidden mr-1 p-1 hover:bg-gray-100 rounded-full"
+               onClick={(e) => {
+                 e.stopPropagation();
+                 onBack?.();
+               }}
+            >
+              <ChevronLeft className="h-6 w-6 text-[#111625]" />
+            </div>
+
             <Avatar style={{ width: "40px", height: "40px" }}>
               <AvatarImage src={user.image} alt={user.name} />
               <AvatarFallback>

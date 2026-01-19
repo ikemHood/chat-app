@@ -76,7 +76,7 @@ export function TopBar({
           <div className="flex items-center gap-3">
             {/* Search form */}
             <div 
-              className="flex items-center gap-2"
+              className="hidden md:flex items-center gap-2"
               style={{
                 width: "300px",
                 height: "32px",

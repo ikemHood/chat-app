@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useState, useMemo } from "react";
+import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { IconSidebar } from "./icon-sidebar";
 import { MessageList } from "./message-list";
@@ -133,7 +134,7 @@ export function ChatLayout({
       />
 
       {/* Main content area */}
-      <div className="flex flex-1 flex-col gap-4 p-4">
+      <div className="flex flex-1 flex-col gap-4 p-2 md:p-4">
         {/* Top bar */}
         <TopBar
           user={user}
@@ -146,7 +147,10 @@ export function ChatLayout({
         {/* Content area with message list and chat */}
         <div className="flex flex-1 gap-4 overflow-hidden">
           {/* Message list - swipeable items */}
-          <div className="shrink-0 overflow-hidden">
+          <div className={cn(
+            "shrink-0 overflow-hidden w-full md:w-auto md:block",
+             selectedConversation ? "hidden" : "block"
+          )}>
             <MessageList
               messages={filteredMessages}
               selectedId={selectedConversation?.id}
@@ -171,20 +175,26 @@ export function ChatLayout({
           </div>
 
           {/* Main chat area - separate rounded container */}
-          <ChatArea
-            user={currentChatUser}
-            messages={messages}
-            currentUserId={user?.id ?? ""}
-            onSendMessage={onSendMessage}
-            onOpenContactInfo={() => setIsContactInfoOpen(true)}
-            onReact={onReact}
-            onTyping={onTyping}
-            isTyping={isTyping}
-            isLoading={isLoadingMessages}
-            onClearChat={selectedConversation ? () => onClearChat?.(selectedConversation.id) : undefined}
-            onExportChat={selectedConversation ? () => onExportChat?.(selectedConversation.id) : undefined}
-            onDeleteChat={selectedConversation ? () => onDeleteChat?.(selectedConversation.id) : undefined}
-          />
+          <div className={cn(
+            "flex-1 flex flex-col min-w-0 w-full md:w-auto md:flex",
+            selectedConversation ? "flex" : "hidden"
+          )}>
+            <ChatArea
+              onBack={() => onSelectConversation?.(undefined)}
+              user={currentChatUser}
+              messages={messages}
+              currentUserId={user?.id ?? ""}
+              onSendMessage={onSendMessage}
+              onOpenContactInfo={() => setIsContactInfoOpen(true)}
+              onReact={onReact}
+              onTyping={onTyping}
+              isTyping={isTyping}
+              isLoading={isLoadingMessages}
+              onClearChat={selectedConversation ? () => onClearChat?.(selectedConversation.id) : undefined}
+              onExportChat={selectedConversation ? () => onExportChat?.(selectedConversation.id) : undefined}
+              onDeleteChat={selectedConversation ? () => onDeleteChat?.(selectedConversation.id) : undefined}
+            />
+          </div>
         </div>
       </div>
 

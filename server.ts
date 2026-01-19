@@ -4,16 +4,16 @@ import next from "next";
 import type { ServerWebSocket } from "bun";
 import { auth } from "./src/server/better-auth/config";
 import { db } from "./src/server/db";
-import { pubsub, publishStatus } from "./src/server/pubsub";
+import { AI_BOT_ID } from "./src/constants";
 import type { WsData, WsIncomingMessage } from "./src/types/websocket";
 
+// Import modularized helpers
 // Import modularized helpers
 import {
     initJwks,
     verifyJwtToken,
     registerClient,
     unregisterClient,
-    setupPubSubHandlers,
     handleWsMessage,
     markMessagesDelivered,
 } from "./server/api/wshelpers";
@@ -29,7 +29,6 @@ const nextHandler = app.getRequestHandler();
 
 async function startServer(): Promise<void> {
     await app.prepare();
-    await pubsub.connect();
 
     await db.user.updateMany({
         where: { isOnline: true },
@@ -40,8 +39,12 @@ async function startServer(): Promise<void> {
     // Initialize JWKS for JWT verification
     initJwks(hostname, port);
 
-    // Setup PubSub handlers
-    setupPubSubHandlers();
+    // Ensure AI Bot is always "online"
+    await db.user.updateMany({
+        where: { id: AI_BOT_ID },
+        data: { isOnline: true },
+    });
+    console.log("> Set AI Bot status to online");
 
     // Create Node.js HTTP server for Next.js
     const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
@@ -123,13 +126,6 @@ async function startServer(): Promise<void> {
                 // Mark pending messages as delivered
                 await markMessagesDelivered(userId);
 
-                // Publish status change via PubSub (for other server instances)
-                await publishStatus({
-                    type: "STATUS_CHANGE",
-                    userId,
-                    isOnline: true,
-                });
-
                 console.log(`[WS] User ${userId} connected`);
             },
 
@@ -161,12 +157,6 @@ async function startServer(): Promise<void> {
                         data: { isOnline: false, lastSeen: new Date() },
                     });
 
-                    await publishStatus({
-                        type: "STATUS_CHANGE",
-                        userId,
-                        isOnline: false,
-                    });
-
                     console.log(`[WS] User ${userId} disconnected`);
                 }
             },
@@ -179,7 +169,6 @@ async function startServer(): Promise<void> {
 // Handle graceful shutdown
 process.on("SIGINT", async () => {
     console.log("\nShutting down...");
-    await pubsub.disconnect();
     process.exit(0);
 });
 

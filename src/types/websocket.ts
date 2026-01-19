@@ -107,9 +107,21 @@ export interface WsReadMessage {
 }
 
 /**
+ * Reaction update from client
+ */
+export interface WsReactionMessage {
+    type: "REACTION";
+    payload: {
+        messageId: string;
+        emoji: string;
+        action: "add" | "remove";
+    };
+}
+
+/**
  * All possible messages from client to server
  */
-export type WsIncomingMessage = WsChatMessage | WsTypingMessage | WsReadMessage;
+export type WsIncomingMessage = WsChatMessage | WsTypingMessage | WsReadMessage | WsReactionMessage;
 
 /**
  * Data attached to each WebSocket connection
