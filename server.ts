@@ -16,6 +16,7 @@ import {
     unregisterClient,
     handleWsMessage,
     markMessagesDelivered,
+    broadcast,
 } from "./server/api/wshelpers";
 
 const dev = process.env.NODE_ENV !== "production";
@@ -115,13 +116,25 @@ async function startServer(): Promise<void> {
                 const userId = ws.data.userId;
 
                 // Register connection using modular helper
-                registerClient(userId, ws);
+                const isFirstConnection = registerClient(userId, ws);
 
                 // Update user status to online in PostgreSQL
+                // We update this even if already connected to keep lastSeen fresh
                 await db.user.update({
                     where: { id: userId },
                     data: { isOnline: true, lastSeen: new Date() },
                 });
+
+                if (isFirstConnection) {
+                    broadcast({
+                        type: "STATUS",
+                        payload: {
+                            userId,
+                            isOnline: true,
+                        },
+                    });
+                    console.log(`[WS] User ${userId} came online`);
+                }
 
                 // Mark pending messages as delivered
                 await markMessagesDelivered(userId);
@@ -157,7 +170,16 @@ async function startServer(): Promise<void> {
                         data: { isOnline: false, lastSeen: new Date() },
                     });
 
-                    console.log(`[WS] User ${userId} disconnected`);
+                    // Broadcast offline status
+                    broadcast({
+                        type: "STATUS",
+                        payload: {
+                            userId,
+                            isOnline: false,
+                        },
+                    });
+
+                    console.log(`[WS] User ${userId} disconnected (last connection)`);
                 }
             },
         },

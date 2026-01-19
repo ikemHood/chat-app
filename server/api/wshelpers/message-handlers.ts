@@ -106,7 +106,26 @@ export async function handleWsMessage(
                 void (async () => {
                     try {
                         console.log(`[AI] Generating response for: "${content.substring(0, 50)}..."`);
-                        const aiResponse = await generateAIResponse(content);
+
+                        // Fetch history
+                        const history = await db.message.findMany({
+                            where: { conversationId: conversation.id },
+                            orderBy: { createdAt: "desc" },
+                            take: 20,
+                        });
+
+                        // Reverse to chronological order and format
+                        type CoreMessage = {
+                            role: "user" | "assistant" | "system";
+                            content: string;
+                        };
+
+                        const formattedHistory: CoreMessage[] = history.reverse().map(msg => ({
+                            role: msg.senderId === AI_BOT_ID ? "assistant" : "user",
+                            content: msg.content,
+                        }));
+
+                        const aiResponse = await generateAIResponse(content, formattedHistory);
                         console.log(`[AI] Got response: "${aiResponse.substring(0, 50)}..."`);
 
                         const aiMessage = await db.message.create({

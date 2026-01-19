@@ -44,9 +44,8 @@ export function TopBar({
 
   return (
     <div 
-      className="flex flex-col items-start"
+      className="flex flex-col items-start px-3 py-3 md:px-6"
       style={{ 
-        padding: "12px 24px",
         gap: "24px",
         background: "#FFFFFF",
         borderRadius: "16px"

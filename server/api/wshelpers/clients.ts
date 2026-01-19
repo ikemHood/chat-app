@@ -8,11 +8,14 @@ const clients = new Map<string, Set<ServerWebSocket<WsData>>>();
 /**
  * Register a client connection
  */
-export function registerClient(userId: string, ws: ServerWebSocket<WsData>): void {
+export function registerClient(userId: string, ws: ServerWebSocket<WsData>): boolean {
+    let isFirstConnection = false;
     if (!clients.has(userId)) {
         clients.set(userId, new Set());
+        isFirstConnection = true;
     }
     clients.get(userId)!.add(ws);
+    return isFirstConnection;
 }
 
 /**
