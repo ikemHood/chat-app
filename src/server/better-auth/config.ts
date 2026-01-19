@@ -46,6 +46,10 @@ export const auth = betterAuth({
       },
     },
   },
+
+  advanced: {
+    cookiePrefix: 'chatapp',
+  },
 });
 
 export type Session = typeof auth.$Infer.Session;

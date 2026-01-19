@@ -1,14 +1,10 @@
 import "dotenv/config";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import next from "next";
-import type { ServerWebSocket } from "bun";
 import { auth } from "./src/server/better-auth/config";
 import { db } from "./src/server/db";
-import { AI_BOT_ID } from "./src/constants";
 import type { WsData, WsIncomingMessage } from "./src/types/websocket";
 
-// Import modularized helpers
-// Import modularized helpers
 import {
     initJwks,
     verifyJwtToken,
