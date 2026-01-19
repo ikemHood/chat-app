@@ -88,16 +88,21 @@ export default function SignUpPage() {
       </div>
 
       {/* Theme toggle */}
-      <div className="absolute right-4 top-4">
+      {/* <div className="absolute right-4 top-4">
         <ThemeToggle />
-      </div>
+      </div> */}
 
       {/* Logo */}
       <div className="mb-8 flex flex-col items-center gap-2">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary">
-          <MessageCircle className="h-6 w-6 text-primary-foreground" />
-        </div>
-        <h1 className="text-xl font-semibold text-foreground">Message</h1>
+        <div className="overflow-hidden rounded-full cursor-pointer hover:opacity-90 transition-opacity" style={{ width: "44px", height: "44px" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src="/logo.png" 
+                alt="Logo" 
+                className="h-full w-full object-cover"
+              />
+            </div>
+        <h1 className="text-xl font-semibold text-foreground">Chat APP</h1>
       </div>
 
       {/* Sign Up Card */}
