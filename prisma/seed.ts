@@ -1,7 +1,11 @@
 
+
+import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "../generated/prisma";
 
-const prisma = new PrismaClient();
+const connectionString = `${process.env.DATABASE_URL}`;
+const adapter = new PrismaNeon({ connectionString });
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
     const aiBot = await prisma.user.upsert({
