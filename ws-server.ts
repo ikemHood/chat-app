@@ -1,6 +1,4 @@
 import "dotenv/config";
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import next from "next";
 import { auth } from "./src/server/better-auth/config";
 import { db } from "./src/server/db";
 import type { WsData, WsIncomingMessage } from "./src/types/websocket";
@@ -15,37 +13,15 @@ import {
     broadcast,
 } from "./server/api/wshelpers";
 
-const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
-const port = parseInt(process.env.PORT ?? "3000", 10);
+const nextPort = parseInt(process.env.PORT ?? "3000", 10);
 const wsPort = parseInt(process.env.WS_PORT ?? "3001", 10);
 
-// Initialize Next.js
-const app = next({ dev, hostname, port });
-const nextHandler = app.getRequestHandler();
+async function startWsServer() {
+    // Initialize JWKS with the address of the Next.js server (where /api/auth/jwks lives)
+    // We assume Next.js runs on 'hostname' and 'port' (3000)
+    initJwks(hostname, nextPort);
 
-async function startServer(): Promise<void> {
-    await app.prepare();
-
-    // Initialize JWKS for JWT verification
-    initJwks(hostname, port);
-
-    // Create Node.js HTTP server for Next.js
-    const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
-        try {
-            await nextHandler(req, res);
-        } catch (err) {
-            console.error("[Server] Error handling request:", err);
-            res.statusCode = 500;
-            res.end("Internal Server Error");
-        }
-    });
-
-    httpServer.listen(port, () => {
-        console.log(`> Next.js ready on http://${hostname}:${port}`);
-    });
-
-    // Create Bun WebSocket server on separate port
     const wsServer = Bun.serve<WsData>({
         port: wsPort,
         async fetch(req, server) {
@@ -68,17 +44,22 @@ async function startServer(): Promise<void> {
 
                 // Fallback to cookie-based auth (same-origin connections)
                 if (!userId) {
-                    const session = await auth.api.getSession({
-                        headers: req.headers,
-                    });
-                    userId = session?.user?.id ?? null;
-                    if (userId) {
-                        console.log(`[WS] Cookie auth for user: ${userId}`);
+                    try {
+                        const session = await auth.api.getSession({
+                            headers: req.headers,
+                        });
+                        userId = session?.user?.id ?? null;
+                        if (userId) {
+                            console.log(`[WS] Cookie auth for user: ${userId}`);
+                        }
+                    } catch (error) {
+                        console.error("[WS] Session retrieval failed:", error);
                     }
                 }
 
                 if (!userId) {
                     console.log("[WS] Authentication failed - no valid token or session");
+                    // We can return 401, but for browsers it might be better to just fail upgrade or close
                     return new Response("Unauthorized", { status: 401 });
                 }
 
@@ -102,11 +83,14 @@ async function startServer(): Promise<void> {
                 const isFirstConnection = registerClient(userId, ws);
 
                 // Update user status to online in PostgreSQL
-                // We update this even if already connected to keep lastSeen fresh
-                await db.user.update({
-                    where: { id: userId },
-                    data: { isOnline: true, lastSeen: new Date() },
-                });
+                try {
+                    await db.user.update({
+                        where: { id: userId },
+                        data: { isOnline: true, lastSeen: new Date() },
+                    });
+                } catch (e) {
+                    console.error(`[WS] Failed to update user online status for ${userId}:`, e);
+                }
 
                 if (isFirstConnection) {
                     broadcast({
@@ -148,10 +132,14 @@ async function startServer(): Promise<void> {
 
                 if (wasLastConnection) {
                     // Update user status in PostgreSQL
-                    await db.user.update({
-                        where: { id: userId },
-                        data: { isOnline: false, lastSeen: new Date() },
-                    });
+                    try {
+                        await db.user.update({
+                            where: { id: userId },
+                            data: { isOnline: false, lastSeen: new Date() },
+                        });
+                    } catch (e) {
+                        console.error(`[WS] Failed to update offline status for ${userId}:`, e);
+                    }
 
                     // Broadcast offline status
                     broadcast({
@@ -168,16 +156,11 @@ async function startServer(): Promise<void> {
         },
     });
 
-    console.log(`> WebSocket server on ws://${hostname}:${wsPort}/ws`);
+    console.log(`> WebSocket server running on ws://${hostname}:${wsPort}/ws`);
+    console.log(`> Expecting Next.js server on http://${hostname}:${nextPort}`);
 }
 
-// Handle graceful shutdown
-process.on("SIGINT", async () => {
-    console.log("\nShutting down...");
-    process.exit(0);
-});
-
-startServer().catch((err) => {
-    console.error("Failed to start server:", err);
+startWsServer().catch((err) => {
+    console.error("Failed to start WebSocket server:", err);
     process.exit(1);
 });
