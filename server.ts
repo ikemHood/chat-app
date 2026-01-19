@@ -31,21 +31,8 @@ const nextHandler = app.getRequestHandler();
 async function startServer(): Promise<void> {
     await app.prepare();
 
-    await db.user.updateMany({
-        where: { isOnline: true },
-        data: { isOnline: false },
-    });
-    console.log("> Reset all users to offline status");
-
     // Initialize JWKS for JWT verification
     initJwks(hostname, port);
-
-    // Ensure AI Bot is always "online"
-    await db.user.updateMany({
-        where: { id: AI_BOT_ID },
-        data: { isOnline: true },
-    });
-    console.log("> Set AI Bot status to online");
 
     // Create Node.js HTTP server for Next.js
     const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
