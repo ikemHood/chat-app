@@ -27,14 +27,25 @@ import { db } from "@/server/db";
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
-  const session = await auth.api.getSession({
-    headers: opts.headers,
-  });
-  return {
-    db,
-    session,
-    ...opts,
-  };
+  try {
+    const session = await auth.api.getSession({
+      headers: opts.headers,
+    });
+    return {
+      db,
+      session,
+      ...opts,
+    };
+  } catch (error) {
+    console.error("[TRPC] Context creation failed:", error);
+    // Return context without session rather than throwing, to allow public procedures to work
+    // Protected procedures will check for session and throw UNAUTHORIZED
+    return {
+      db,
+      session: null,
+      ...opts,
+    };
+  }
 };
 
 /**
