@@ -5,6 +5,7 @@ import { useEffect, useRef, useCallback, useMemo, useState } from "react";
 import { ChatLayout } from "./chat-layout";
 import { api } from "@/trpc/react";
 import { authClient } from "@/server/better-auth/client";
+import { env } from "@/env";
 import type {
   Conversation,
   Message,
@@ -191,9 +192,11 @@ export function ChatClient({ initialUser }: ChatClientProps) {
     // WebSocket server runs on port 3001
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsHost = window.location.hostname;
+    const defaultWsUrl = `${protocol}//${wsHost}:3001/ws`;
+    const baseUrl = env.NEXT_PUBLIC_WS_URL ?? defaultWsUrl;
     
-    // Pass JWT token as query parameter for cross-port auth
-    const wsUrl = `${protocol}//${wsHost}:3001/ws?token=${encodeURIComponent(tokenResult.data.token)}`;
+    // Pass JWT token as query parameter
+    const wsUrl = `${baseUrl}?token=${encodeURIComponent(tokenResult.data.token)}`;
     console.log("[WS] Connecting to:", wsUrl.substring(0, 50) + "...");
     
     const ws = new WebSocket(wsUrl);
