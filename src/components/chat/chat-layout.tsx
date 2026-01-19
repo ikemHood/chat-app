@@ -12,9 +12,6 @@ import { ContactInfoPanel } from "./contact-info-panel";
 import { TopBar } from "./top-bar";
 import { authClient } from "@/server/better-auth/client";
 import type {
-  User,
-  Conversation,
-  Message,
   ChatLayoutProps,
   ChatUser,
 } from "@/types";
@@ -34,10 +31,10 @@ export function ChatLayout({
   onStartConversation,
   isLoadingUsers,
   onReact,
-  onLoadMoreUsers,
-  onSearchUsers,
+  onLoadMoreUsers: _onLoadMoreUsers,
+  onSearchUsers: _onSearchUsers,
   onArchive,
-  onUnarchive,
+  onUnarchive: _onUnarchive,
   onMute,
   onPin,
   onClearChat,
@@ -92,7 +89,6 @@ export function ChatLayout({
       isRead: conv.lastMessage?.isRead ?? false,
       unreadCount: conv.unreadCount,
     }));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversations]);
 
   // Filter messages based on search
@@ -131,6 +127,7 @@ export function ChatLayout({
         activeItem={activeNav}
         onNavigate={handleNavigation}
         user={user}
+        onLogout={handleLogout}
       />
 
       {/* Main content area */}

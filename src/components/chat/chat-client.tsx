@@ -143,7 +143,7 @@ export function ChatClient({ initialUser }: ChatClientProps) {
         messages.some(m => m.senderId !== initialUser.id && m.status !== "read")) {
       wsRef.current.send(JSON.stringify({ type: "READ", payload: { peerId: selectedConversation.user.id } }));
     }
-  }, [selectedConversation?.user.id, messages, initialUser.id]);
+  }, [selectedConversation, messages, initialUser.id]);
 
   // ---/ WebSocket /---
   const wsRef = useRef<WebSocket | null>(null);
@@ -165,7 +165,7 @@ export function ChatClient({ initialUser }: ChatClientProps) {
 
   const connectWebSocket = useCallback(async () => {
     // Close existing connection if any
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
       console.log("[WS] Already connected, skipping");
       return;
     }

@@ -4,7 +4,7 @@ import * as React from "react";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { authClient } from "@/server/better-auth/client";
 
 export default function LoginPage() {
@@ -77,6 +76,7 @@ export default function LoginPage() {
       {/* Logo */}
       <div className="mb-8 flex flex-col items-center gap-2">
         <div className="overflow-hidden rounded-full cursor-pointer hover:opacity-90 transition-opacity" style={{ width: "44px", height: "44px" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
                 src="/logo.png" 
                 alt="Logo" 

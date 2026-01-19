@@ -118,7 +118,7 @@ export function SwipeableMessageItem({
   onMarkUnread,
   onMute,
   onDelete,
-  onPin,
+  onPin: _onPin,
   onContactInfo,
   onExport,
   onClear,

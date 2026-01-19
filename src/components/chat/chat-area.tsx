@@ -5,16 +5,14 @@ import { useState, useRef, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Search, Phone, Video, MoreHorizontal, Smile, Paperclip, Send, Mic, ChevronLeft } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Message, ChatUser, ChatAreaProps } from "@/types";
+import type { Message, ChatAreaProps } from "@/types";
 import { REACTION_OPTIONS } from "@/constants";
 
 function formatTime(date: Date): string {

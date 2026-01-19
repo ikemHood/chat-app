@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface LogoMenuProps {
   user?: {
@@ -11,9 +10,10 @@ interface LogoMenuProps {
     image?: string;
   };
   children: React.ReactNode;
+  onLogout?: () => void;
 }
 
-export function LogoMenu({ user, children }: LogoMenuProps) {
+export function LogoMenu({ user, children, onLogout }: LogoMenuProps) {
   // Arrow icon component
   const ArrowRightIcon = () => (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ transform: "matrix(-1, 0, 0, 1, 0, 0)" }}>
@@ -200,7 +200,10 @@ export function LogoMenu({ user, children }: LogoMenuProps) {
 
         {/* Log out */}
         <div className="flex flex-col items-start px-1 py-0 gap-2 w-full">
-          <button className="flex flex-col justify-center items-start p-1.5 gap-2 w-full h-[40px] rounded-lg hover:bg-gray-50 transition-colors">
+          <button 
+            onClick={onLogout}
+            className="flex flex-col justify-center items-start p-1.5 gap-2 w-full h-[40px] rounded-lg hover:bg-gray-50 transition-colors"
+          >
             <div className="flex flex-row items-center p-0 gap-2 w-full h-[28px]">
               <div className="flex flex-row items-center p-1.5 gap-2.5 w-[28px] h-[28px] bg-[#F3F3EE] rounded-[6px]">
                 <LogoutIcon />

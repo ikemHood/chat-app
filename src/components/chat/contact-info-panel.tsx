@@ -1,12 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { X, Phone, Video, FileText, Link as LinkIcon, Image as ImageIcon, FileCheck, FileCode, FileImage, Download } from "lucide-react";
+import { X, Phone, Video, FileText, Link as LinkIcon, Image as ImageIcon, FileCode, FileImage } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { ChatUser } from "./chat-area";
+import type { ChatUser } from "@/types";
 
 interface MediaItem {
   id: string;
@@ -84,6 +84,7 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
                 key={item.id}
                 className="relative aspect-square overflow-hidden rounded-lg bg-muted hover:opacity-90 transition-opacity ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={item.thumbnail ?? item.url}
                   alt=""
@@ -126,7 +127,10 @@ function LinkList({ items }: { items: LinkItem[] }) {
               >
                 <div className="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-muted group-hover:bg-muted/80 transition-colors">
                   {item.favicon ? (
-                    <img src={item.favicon} alt="" className="h-5 w-5" />
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={item.favicon} alt="" className="h-5 w-5" />
+                    </>
                   ) : (
                     <LinkIcon className="h-5 w-5 text-muted-foreground" />
                   )}

@@ -3,8 +3,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogoMenu } from "./logo-menu";
 
@@ -69,6 +67,7 @@ interface IconSidebarProps {
     email: string;
     image?: string;
   };
+  onLogout?: () => void;
 }
 
 const navItems = [
@@ -83,6 +82,7 @@ export function IconSidebar({
   activeItem = "messages",
   onNavigate,
   user,
+  onLogout,
 }: IconSidebarProps) {
   return (
     <TooltipProvider delayDuration={0}>
@@ -95,8 +95,9 @@ export function IconSidebar({
         {/* Top container */}
         <div className="flex flex-col items-center gap-8">
           {/* Logo with Popover Menu */}
-          <LogoMenu user={user}>
+          <LogoMenu user={user} onLogout={onLogout}>
             <div className="relative overflow-hidden rounded-full cursor-pointer hover:opacity-90 transition-opacity w-9 h-9 md:w-11 md:h-11">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
                 src="/logo.png" 
                 alt="Logo" 

@@ -242,7 +242,7 @@ export const chatRouter = createTRPCRouter({
                     try {
                         const response = await generateAIResponse(input.content);
 
-                        const aiMessage = await ctx.db.message.create({
+                        await ctx.db.message.create({
                             data: {
                                 conversationId: conversation.id,
                                 senderId: AI_BOT_ID,
