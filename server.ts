@@ -35,7 +35,7 @@ async function startServer(): Promise<void> {
         try {
             await nextHandler(req, res);
         } catch (err) {
-            console.error("Error handling request:", err);
+            console.error("[Server] Error handling request:", err);
             res.statusCode = 500;
             res.end("Internal Server Error");
         }

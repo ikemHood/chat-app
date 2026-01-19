@@ -30,6 +30,7 @@ const handler = async (req: NextRequest) => {
         console.error(error.stack);
       },
     });
+    console.log(`[TRPC] Response status: ${response.status}`);
     return response;
   } catch (error) {
     console.error("[TRPC] Fatal error in handler:", error);
