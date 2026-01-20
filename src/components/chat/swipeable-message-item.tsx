@@ -243,7 +243,7 @@ export function SwipeableMessageItem({
               {/* Name and time row */}
               <div className="flex items-center justify-between gap-1">
                 <span
-                  className="truncate font-medium text-[14px] leading-[20px]  text-[#111625]"
+                  className="truncate font-medium text-[14px] leading-[20px] tracking-[-0.006em] text-[#1C1C1C]"
                 >
                   {message.user.name}
                 </span>
@@ -269,7 +269,7 @@ export function SwipeableMessageItem({
                   </div>
                 ) : (
                   <ChecksIcon
-                    className={cn("shrink-0 w-4 h-4", message.isRead ? "bg-[#1E9A80]" : "bg-[#8796AF]")}
+                    className={cn("shrink-0 w-4 h-4", message.isRead ? "bg-[#1E9A80]" : "bg-[#8B8B8B]")}
                   />
                 )}
               </div>
