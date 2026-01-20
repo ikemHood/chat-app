@@ -276,11 +276,7 @@ export function ContactInfoPanel({
 
   return (
     <div 
-      className="absolute right-3 top-3 bottom-3 w-[450px] bg-white rounded-[24px] z-20 flex flex-col overflow-hidden border border-gray-100"
-      style={{
-        boxShadow: "0px 4px 32px rgba(0, 0, 0, 0.12)",
-        height: "calc(100vh - 24px)"
-      }}
+      className="absolute right-3 top-3 bottom-3 w-[450px] bg-white rounded-[24px] z-20 flex flex-col overflow-hidden border border-gray-100 shadow-[0px_4px_32px_rgba(0,0,0,0.12)] h-[calc(100vh-24px)]"
     >
       
       {/* Header */}

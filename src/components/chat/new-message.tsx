@@ -25,10 +25,6 @@ function UserItem({
     <button
       onClick={onClick}
       className="flex flex-row items-center p-1.5 w-full h-[44px] rounded-lg hover:bg-[#F3F3EE] transition-colors group"
-      style={{
-        // padding: "6px 8px",
-        // gap: "10px"
-      }}
     >
       {/* Profile */}
       <div className="flex flex-row items-center p-0 gap-2.5 w-max h-[32px]">
@@ -92,15 +88,7 @@ export function NewMessagePopup({
       <PopoverContent 
         side="bottom" 
         align="start"
-        className="flex flex-col items-center p-3 gap-3 bg-white overflow-hidden"
-        style={{
-          width: "273px",
-          maxHeight: "440px",
-          border: "none",
-          boxShadow: "0px 0px 24px rgba(0, 0, 0, 0.06)",
-          borderRadius: "16px",
-          padding: "12px"
-        }}
+        className="flex flex-col items-center gap-3 bg-white overflow-hidden w-[273px] max-h-[440px] border-none shadow-[0px_0px_24px_rgba(0,0,0,0.06)] rounded-[16px] p-[12px]"
       >
         {/* Member List Container */}
         <div className="flex flex-col items-start p-0 gap-4 w-full h-full min-h-0">
@@ -113,13 +101,12 @@ export function NewMessagePopup({
 
           {/* Search Form */}
           <div 
-            className="flex flex-row items-center p-2.5 gap-2 w-full h-[32px] bg-white border border-[#F3F3EE] rounded-[10px]"
-            style={{ padding: "10px 4px 10px 10px" }}
+            className="flex flex-row items-center gap-2 w-full h-[32px] bg-white border border-[#F3F3EE] rounded-[10px] p-[10px_4px_10px_10px]"
           >
             <SearchIcon className="w-[14px] h-[14px] text-[#8B8B8B]" />
             <input
               type="text"
-              placeholder="Search"
+              placeholder="Search name or email"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-1 bg-transparent outline-none min-w-0 font-normal text-[12px] leading-[16px] text-[#111625] placeholder-[#8B8B8B]"

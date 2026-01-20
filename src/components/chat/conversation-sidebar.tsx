@@ -82,29 +82,28 @@ function ConversationItem({
         )}
       </div>
 
-      {/* Content */}
       <div className="flex-1 overflow-hidden">
         <div className="flex items-center justify-between gap-2">
-          <span className="truncate font-medium" style={{ color: "#111625" }}>
+          <span className="truncate font-medium text-[#111625]">
             {conversation.user.name}
           </span>
           {conversation.lastMessage && (
-            <span className="shrink-0 text-xs" style={{ color: "#8796AF" }}>
+            <span className="shrink-0 text-xs text-[#8796AF]">
               {formatTimestamp(conversation.lastMessage.timestamp)}
             </span>
           )}
         </div>
         <div className="flex items-center justify-between gap-2 mt-0.5">
-          <p className="truncate text-sm" style={{ color: "#596881" }}>
+          <p className="truncate text-sm text-[#596881]">
             {conversation.lastMessage?.content ?? "No messages yet"}
           </p>
           {conversation.unreadCount > 0 && (
-            <Badge variant="default" className="h-5 min-w-5 shrink-0 rounded-full px-1.5 text-[10px] font-semibold" style={{ background: "#1E9A80" }}>
+            <Badge variant="default" className="h-5 min-w-5 shrink-0 rounded-full px-1.5 text-[10px] font-semibold bg-[#1E9A80]">
               {conversation.unreadCount > 99 ? "99+" : conversation.unreadCount}
             </Badge>
           )}
           {conversation.lastMessage?.isRead && conversation.lastMessage?.isSent && (
-            <span className="shrink-0 text-xs" style={{ color: "#1E9A80" }}>✓✓</span>
+            <span className="shrink-0 text-xs text-[#1E9A80]">✓✓</span>
           )}
         </div>
       </div>
@@ -134,11 +133,11 @@ export function ConversationSidebar({
   isLoading,
 }: ConversationSidebarProps) {
   return (
-    <div className="flex h-full w-80 flex-col" style={{ background: "#FFFFFF" }}>
+    <div className="flex h-full w-80 flex-col bg-white">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-[#E8E5DF] px-6 py-4">
-        <h2 className="text-lg font-semibold" style={{ color: "#111625" }}>All Message</h2>
-        <Button size="sm" onClick={onNewMessage} className="gap-1.5" style={{ background: "#1E9A80" }}>
+        <h2 className="text-lg font-semibold text-[#111625]">All Message</h2>
+        <Button size="sm" onClick={onNewMessage} className="gap-1.5 bg-[#1E9A80]">
           <Plus className="h-4 w-4" />
           New Message
         </Button>
@@ -147,22 +146,17 @@ export function ConversationSidebar({
       {/* Search */}
       <div className="flex items-center gap-2 border-b border-[#E8E5DF] px-6 py-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "#8796AF" }} />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8796AF]" />
           <input
             type="text"
             placeholder="Search in message"
             value={searchQuery}
             onChange={(e) => onSearchChange?.(e.target.value)}
-            className="h-9 w-full rounded-lg border pl-9 text-sm outline-none"
-            style={{ 
-              border: "1px solid #E8E5DF",
-              color: "#111625",
-              background: "#FFFFFF"
-            }}
+            className="h-9 w-full rounded-lg border pl-9 text-sm outline-none border-[#E8E5DF] text-[#111625] bg-white"
           />
         </div>
         <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0">
-          <Filter className="h-4 w-4" style={{ color: "#596881" }} />
+          <Filter className="h-4 w-4 text-[#596881]" />
         </Button>
       </div>
 

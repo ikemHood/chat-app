@@ -121,7 +121,7 @@ export function ChatLayout({
   };
 
   return (
-    <div className="relative flex h-screen w-full overflow-hidden" style={{ background: "#F3F3EE" }}>
+    <div className="relative flex h-screen w-full overflow-hidden bg-[#F3F3EE]">
       {/* Icon sidebar */}
       <IconSidebar
         activeItem={activeNav}
@@ -131,7 +131,7 @@ export function ChatLayout({
       />
 
       {/* Main content area */}
-      <div className="flex flex-1 flex-col gap-4 p-2 md:p-4">
+      <div className="flex flex-1 flex-col gap-3 p-3">
         {/* Top bar */}
         <TopBar
           user={user}
@@ -142,7 +142,7 @@ export function ChatLayout({
         />
 
         {/* Content area with message list and chat */}
-        <div className="flex flex-1 gap-4 overflow-hidden">
+        <div className="flex flex-1 gap-3 overflow-hidden">
           {/* Message list - swipeable items */}
           <div className={cn(
             "shrink-0 overflow-hidden w-full md:w-auto md:block",

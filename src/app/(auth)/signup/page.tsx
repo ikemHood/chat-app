@@ -93,7 +93,7 @@ export default function SignUpPage() {
 
       {/* Logo */}
       <div className="mb-8 flex flex-col items-center gap-2">
-        <div className="overflow-hidden rounded-full cursor-pointer hover:opacity-90 transition-opacity" style={{ width: "44px", height: "44px" }}>
+        <div className="overflow-hidden rounded-full cursor-pointer hover:opacity-90 transition-opacity w-[44px] h-[44px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
                 src="/logo.png" 

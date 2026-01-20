@@ -1,24 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { Search, Bell, Settings, ChevronDown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-
-// Message icon for the header
-function MessageCircleIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path 
-        d="M17.5 9.58333C17.5028 10.6833 17.2663 11.7697 16.81 12.7667C16.2697 13.9531 15.4297 14.968 14.3747 15.7166C13.3197 16.4651 12.0857 16.9228 10.7972 17.0417C9.68889 17.1008 8.58078 16.9101 7.55 16.4833L2 18.5L4.01667 12.95C3.58833 11.9192 3.40192 10.8111 3.46944 9.70278C3.58834 8.41431 4.04603 7.18031 4.79459 6.12528C5.54315 5.07025 6.5581 4.23025 7.74444 3.69C8.74144 3.23378 9.82794 2.99728 10.9278 3H11.3333C13.0992 3.09714 14.766 3.83535 16.0403 5.10968C17.3147 6.38401 18.0529 8.05083 18.15 9.81667L17.5 9.58333Z" 
-        stroke="#596881" 
-        strokeWidth="1.875" 
-        strokeLinecap="round" 
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { UserMenu } from "./user-menu";
 
 interface TopBarProps {
   user?: {
@@ -30,6 +19,7 @@ interface TopBarProps {
   onNotifications?: () => void;
   onSettings?: () => void;
   onProfile?: () => void;
+  onLogout?: () => void;
 }
 
 export function TopBar({
@@ -38,53 +28,48 @@ export function TopBar({
   onNotifications,
   onSettings,
   onProfile,
+  onLogout,
 }: TopBarProps) {
   const [searchQuery, setSearchQuery] = React.useState("");
 
   return (
-    <div 
-      className="flex flex-col items-start px-3 py-3 md:px-6"
-      style={{ 
-        gap: "24px",
-        background: "#FFFFFF",
-        borderRadius: "16px"
-      }}
-    >
-      <div className="flex w-full items-center justify-between">
-        {/* Left - Page label */}
-        <div className="flex items-center gap-2">
-          <MessageCircleIcon className="h-5 w-5" />
-          <span 
-            className="font-medium"
-            style={{ 
-              fontFamily: "Inter, sans-serif",
-              fontSize: "14px",
-              lineHeight: "20px",
-              letterSpacing: "-0.006em",
-              color: "#111625"
-            }}
-          >
+    /* Top Bar Container - 1340x56 */
+    <div className="flex flex-col items-start px-6 py-3 gap-6 w-full h-[56px] bg-white rounded-[16px]">
+      {/* Inner Auto Layout - 1292x32 */}
+      <div className="flex flex-row justify-between items-center w-full h-[32px] gap-[9px]">
+
+        {/* Page Label - 89x20 */}
+        <div className="flex flex-row items-center gap-2 h-5 w-[89px]">
+          {/* Task Icon - 20x20 */}
+          <img
+            src="/icons/Task Icon.svg"
+            alt="Task"
+            className="w-5 h-5 flex-none"
+          />
+
+          {/* Greeting - 61x20 */}
+          <span className="w-[61px] h-5 font-medium text-[14px] leading-5 text-[#111625]">
             Message
           </span>
         </div>
 
-        {/* Right - Controls */}
-        <div className="flex items-center gap-4">
-          {/* Search and other controls container */}
-          <div className="flex items-center gap-3">
-            {/* Search form */}
-            <div 
-              className="hidden md:flex items-center gap-2"
-              style={{
-                width: "300px",
-                height: "32px",
-                padding: "10px 4px 10px 10px",
-                border: "1px solid #E8E5DF",
-                borderRadius: "10px"
-              }}
-            >
-              <Search className="h-3.5 w-3.5" style={{ color: "#8796AF" }} />
-              <div className="flex flex-1 items-center gap-2">
+        {/* Right Column - 476x32 */}
+        <div className="flex flex-row items-center gap-4 w-[476px] h-8">
+
+          {/* Container (Search + Icons) - 388x32 */}
+          <div className="flex flex-row items-center gap-3 w-[388px] h-8">
+
+            {/* Search Form - 300x32 */}
+            <div className="box-border flex flex-row items-center px-[10px] py-[10px] gap-2 w-[300px] h-8 border border-[#E8E5DF] rounded-[10px]">
+              {/* Search Icon - 14x14 */}
+              <img
+                src="/icons/search.svg"
+                alt="Search"
+                className="w-[14px] h-[14px] flex-none"
+              />
+
+              {/* Text Input Container */}
+              <div className="flex flex-row items-center gap-[10px] w-[264px] h-6 p-[1.5px] grow">
                 <input
                   type="text"
                   placeholder="Search"
@@ -93,91 +78,74 @@ export function TopBar({
                     setSearchQuery(e.target.value);
                     onSearch?.(e.target.value);
                   }}
-                  className="flex-1 bg-transparent text-xs outline-none placeholder:text-[#8796AF]"
-                  style={{ 
-                    fontFamily: "Inter, sans-serif",
-                    fontSize: "12px",
-                    lineHeight: "16px",
-                    color: "#111625"
-                  }}
+                  className="w-[214px] h-4 font-normal text-[12px] leading-4 text-[#8796AF] placeholder-[#8796AF] outline-none bg-transparent"
                 />
-                <div 
-                  className="flex items-center gap-1"
-                  style={{
-                    padding: "5px 6px",
-                    background: "#F3F3EE",
-                    borderRadius: "6px"
-                  }}
-                >
-                  <span 
-                    style={{ 
-                      fontFamily: "Inter, sans-serif",
-                      fontSize: "12px",
-                      lineHeight: "16px",
-                      color: "#404040"
-                    }}
-                  >
+
+                {/* Command Shortcut - 40x24 */}
+                <div className="flex flex-row items-center px-[6px] py-[5px] gap-1 w-10 h-6 bg-[#F3F3EE] rounded-[6px]">
+                  <span className="w-7 h-4 font-normal text-[12px] leading-4 text-[#404040]">
                     ⌘+K
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Notification button */}
+            {/* Notification Icon - 32x32 */}
             <button
               onClick={onNotifications}
-              className="flex items-center justify-center"
-              style={{
-                width: "32px",
-                height: "32px",
-                background: "#FFFFFF",
-                border: "1px solid #E8E5DF",
-                borderRadius: "8px"
-              }}
+              className="box-border flex flex-row justify-center items-center p-0 gap-1 w-8 h-8 bg-white border border-[#E8E5DF] rounded-[8px]"
             >
-              <Bell className="h-4 w-4" style={{ color: "#262626" }} />
+              <img
+                src="/icons/bell.svg"
+                alt="Notifications"
+                className="w-4 h-4 flex-none"
+              />
             </button>
 
-            {/* Settings button */}
+            {/* Settings Icon - 32x32 */}
             <button
               onClick={onSettings}
-              className="flex items-center justify-center"
-              style={{
-                width: "32px",
-                height: "32px",
-                background: "#FFFFFF",
-                border: "1px solid #E8E5DF",
-                borderRadius: "8px"
-              }}
+              className="box-border flex flex-row justify-center items-center p-0 gap-1 w-8 h-8 bg-white border border-[#E8E5DF] rounded-[8px]"
             >
-              <Settings className="h-4 w-4" style={{ color: "#262626" }} />
+              <img
+                src="/icons/settings.svg"
+                alt="Settings"
+                className="w-4 h-4 flex-none"
+              />
             </button>
           </div>
 
           {/* Divider */}
-          <div 
-            style={{ 
-              width: "0px",
-              height: "20px",
-              border: "1px solid #E8E5DF"
-            }} 
-          />
+          <div className="w-0 h-5 border border-[#E8E5DF]" />
 
-          {/* Profile container */}
-          <button
-            onClick={onProfile}
-            className="flex items-center gap-2"
-          >
-            <Avatar style={{ width: "32px", height: "32px" }}>
-              <AvatarImage src={user?.image} alt={user?.name} />
-              <AvatarFallback className="text-xs">
-                {user?.name?.split(" ").map((n) => n[0]).join("").toUpperCase() ?? "U"}
-              </AvatarFallback>
-            </Avatar>
-            <ChevronDown className="h-4 w-4" style={{ color: "#262626" }} />
-          </button>
+          {/* Profile Container - 56x32 */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="flex flex-row items-center gap-2 w-[56px] h-8 outline-none">
+                {/* Avatar - 32x32 */}
+                <Avatar className="w-8 h-8 rounded-full bg-[#F7F9FB]">
+                  <AvatarImage src={user?.image} alt={user?.name} className="object-cover" />
+                  <AvatarFallback className="text-xs">
+                    {user?.name?.split(" ").map((n) => n[0]).join("").toUpperCase() ?? "U"}
+                  </AvatarFallback>
+                </Avatar>
+
+                {/* Chevron Icon - 16x16 */}
+                <img
+                  src="/icons/Navbar Company Selector.svg"
+                  alt="Menu"
+                  className="w-4 h-4 flex-none"
+                />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 border-none shadow-none bg-transparent" align="end" sideOffset={8}>
+              <UserMenu user={user} onLogout={onLogout} />
+            </PopoverContent>
+          </Popover>
+
         </div>
       </div>
     </div>
   );
 }
+

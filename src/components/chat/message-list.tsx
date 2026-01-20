@@ -2,10 +2,10 @@
 
 import * as React from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  SwipeableMessageItem, 
-  SearchIcon, 
-  FilterIcon, 
+import {
+  SwipeableMessageItem,
+  SearchIcon,
+  FilterIcon,
   PencilPlusIcon,
 } from "./swipeable-message-item";
 import { NewMessagePopup } from "./new-message";
@@ -19,7 +19,7 @@ interface MessageListProps {
   users?: User[];
   onSelectUser?: (user: User) => void;
   isUsersLoading?: boolean;
-  
+
   onArchive?: (id: string) => void;
   onMarkUnread?: (id: string) => void;
   onMute?: (id: string) => void;
@@ -53,37 +53,19 @@ export function MessageList({
   isLoading,
 }: MessageListProps) {
   return (
-    <div 
-      className="flex flex-col h-full"
-      style={{
-        width: "400px",
-        padding: "24px",
-        gap: "24px",
-        background: "#FFFFFF",
-        borderRadius: "24px"
-      }}
+    <div
+      className="flex flex-col h-full w-[400px] p-[24px] gap-[24px] bg-white rounded-[24px]"
     >
       {/* Title row */}
-      <div 
-        className="flex items-center justify-between"
-        style={{
-          height: "32px",
-          gap: "8px"
-        }}
+      <div
+        className="flex items-center justify-between h-[32px] gap-[8px]"
       >
-        <h2 
-          style={{
-            fontFamily: "Inter, sans-serif",
-            fontWeight: 600,
-            fontSize: "20px",
-            lineHeight: "30px",
-            color: "#111625",
-            margin: 0
-          }}
+        <h2
+          className="font-semibold text-[20px] leading-[30px] text-[#111625] m-0"
         >
           All Message
         </h2>
-        
+
         {/* New Message button */}
         <NewMessagePopup
           users={users}
@@ -91,28 +73,11 @@ export function MessageList({
           isLoading={isUsersLoading}
         >
           <button
-            className="flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity"
-            style={{
-              padding: "8px",
-              gap: "6px",
-              height: "32px",
-              background: "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%), #1E9A80",
-              border: "1px solid #1E9A80",
-              boxShadow: "inset 0px 1px 0px 1px rgba(255, 255, 255, 0.12)",
-              borderRadius: "8px"
-            }}
+            className="flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity p-[8px] gap-[6px] h-[32px] bg-[linear-gradient(180deg,rgba(255,255,255,0.12)_0%,rgba(255,255,255,0)_100%),#1E9A80] border border-[#1E9A80] shadow-[inset_0px_1px_0px_1px_rgba(255,255,255,0.12)] rounded-[8px] w-[134px]"
           >
             <PencilPlusIcon className="w-[18px] h-[18px] text-white" />
-            <span 
-              style={{
-                fontFamily: "Inter, sans-serif",
-                fontWeight: 500,
-                fontSize: "14px",
-                lineHeight: "20px",
-                textAlign: "center",
-                letterSpacing: "-0.006em",
-                color: "#FFFFFF"
-              }}
+            <span
+              className="font-medium text-[14px] leading-[20px] text-center  text-white"
             >
               New Message
             </span>
@@ -121,80 +86,47 @@ export function MessageList({
       </div>
 
       {/* Search and filter row */}
-      <div 
-        className="flex items-center"
-        style={{
-          height: "40px",
-          gap: "16px"
-        }}
+      <div
+        className="flex items-center h-[40px] gap-[16px]"
       >
         {/* Search form */}
-        <div 
-          className="flex items-center flex-1"
-          style={{
-            padding: "10px 5px 10px 10px",
-            gap: "8px",
-            height: "40px",
-            border: "1px solid #E8E5DF",
-            borderRadius: "10px"
-          }}
+        <div
+          className="flex items-center flex-1 p-[10px_5px_10px_10px] gap-[8px] h-[40px] border border-[#E8E5DF] rounded-[10px]"
         >
-          <SearchIcon className="w-4 h-4 shrink-0" style={{ color: "#262626" }} />
+          <SearchIcon className="w-4 h-4 shrink-0 text-[#262626]" />
           <input
             type="text"
             placeholder="Search"
             value={searchQuery}
             onChange={(e) => onSearchChange?.(e.target.value)}
-            className="flex-1 bg-transparent outline-none min-w-0"
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontWeight: 400,
-              fontSize: "14px",
-              lineHeight: "20px",
-              letterSpacing: "-0.006em",
-              color: "#404040"
-            }}
+            className="flex-1 bg-transparent outline-none min-w-0 font-normal text-[14px] leading-[20px]  text-[#404040]"
           />
         </div>
 
         {/* Filter button */}
         <button
-          className="flex items-center justify-center shrink-0"
-          style={{
-            width: "40px",
-            height: "40px",
-            background: "#FFFFFF",
-            border: "1px solid #E8E5DF",
-            borderRadius: "10px"
-          }}
+          className="flex items-center justify-center shrink-0 w-[40px] h-[40px] bg-white border border-[#E8E5DF] rounded-[10px]"
         >
-          <FilterIcon className="w-[18px] h-[18px]" style={{ color: "#262626" }} />
+          <FilterIcon className="w-[18px] h-[18px] text-[#262626]" />
         </button>
       </div>
 
       {/* Messages list */}
       <ScrollArea className="flex-1 -mx-3 px-3">
-        <div 
-          className="flex flex-col"
-          style={{ gap: "8px" }}
+        <div
+          className="flex flex-col gap-[8px]"
         >
           {isLoading ? (
             // Loading skeletons
             Array.from({ length: 6 }).map((_, i) => (
-              <div 
+              <div
                 key={i}
-                className="animate-pulse"
-                style={{
-                  height: "64px",
-                  background: "#F3F3EE",
-                  borderRadius: "12px"
-                }}
+                className="animate-pulse h-[64px] bg-[#F3F3EE] rounded-[12px]"
               />
             ))
           ) : messages.length === 0 ? (
-            <div 
-              className="flex flex-col items-center justify-center py-12"
-              style={{ color: "#8B8B8B" }}
+            <div
+              className="flex flex-col items-center justify-center py-12 text-[#8B8B8B]"
             >
               <p>No messages found</p>
             </div>
