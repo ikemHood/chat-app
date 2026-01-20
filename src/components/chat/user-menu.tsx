@@ -23,7 +23,7 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
                 <div className="flex flex-col justify-center items-start p-1 gap-1 w-[299px] rounded-[12px]">
 
                     {/* Go back to dashboard */}
-                    <button className="flex flex-col justify-center items-start p-1.5 gap-2 w-full h-[40px] rounded-[8px] hover:bg-gray-50 transition-colors">
+                    <button className="flex cursor-pointer flex-col justify-center items-start p-1.5 gap-2 w-full h-[40px] rounded-[8px] hover:bg-gray-50 transition-colors">
                         <div className="flex flex-row items-center gap-2 w-full h-[28px]">
                             <div className="flex flex-row items-center p-1.5 gap-2.5 w-[28px] h-[28px] bg-[#F3F3EE] rounded-[6px]">
                                 <div className="relative w-4 h-4">
@@ -43,7 +43,7 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
                     </button>
 
                     {/* Rename file */}
-                    <button className="flex flex-col justify-center items-start p-1.5 gap-2 w-full h-[40px] bg-[#F8F8F5] rounded-[8px]">
+                    <button className="flex cursor-pointer flex-col justify-center items-start p-1.5 gap-2 w-full h-[40px] bg-[#F8F8F5] rounded-[8px]">
                         <div className="flex flex-row items-center gap-2 w-full h-[28px]">
                             <div className="flex flex-row items-center p-1.5 gap-2.5 w-[28px] h-[28px] bg-white rounded-[6px]">
                                 <img
@@ -136,7 +136,7 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
             <div className="flex flex-col items-start px-1 gap-2 w-full pb-1">
 
                 {/* Win free credits */}
-                <button className="flex flex-col justify-center items-start p-1.5 gap-2 w-full h-[40px] rounded-[8px] hover:bg-gray-50 transition-colors">
+                <button className="flex cursor-pointer flex-col justify-center items-start p-1.5 gap-2 w-full h-[40px] rounded-[8px] hover:bg-gray-50 transition-colors">
                     <div className="flex flex-row items-center gap-2 w-full h-[28px]">
                         <div className="flex flex-row items-center p-1.5 gap-2.5 w-[28px] h-[28px] bg-[#F3F3EE] rounded-[6px]">
                             <img
@@ -154,7 +154,7 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
                 </button>
 
                 {/* Theme Style */}
-                <button className="flex flex-col justify-center items-start p-1.5 gap-2 w-full h-[40px] rounded-[8px] hover:bg-gray-50 transition-colors">
+                <button className="flex cursor-pointer flex-col justify-center items-start p-1.5 gap-2 w-full h-[40px] rounded-[8px] hover:bg-gray-50 transition-colors">
                     <div className="flex flex-row items-center gap-2 w-full h-[28px]">
                         <div className="flex flex-row items-center p-1.5 gap-2.5 w-[28px] h-[28px] bg-[#F3F3EE] rounded-[6px]">
                             <Image
@@ -174,7 +174,7 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
                 {/* Log out */}
                 <button
                     onClick={onLogout}
-                    className="flex flex-col justify-center items-start p-1.5 gap-2 w-full h-[40px] rounded-[8px] hover:bg-gray-50 transition-colors"
+                    className="flex cursor-pointer flex-col justify-center items-start p-1.5 gap-2 w-full h-[40px] rounded-[8px] hover:bg-gray-50 transition-colors"
                 >
                     <div className="flex flex-row items-center gap-2 w-full h-[28px]">
                         <div className="flex flex-row items-center p-1.5 gap-2.5 w-[28px] h-[28px] bg-[#F3F3EE] rounded-[6px]">

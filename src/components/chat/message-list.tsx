@@ -4,9 +4,6 @@ import * as React from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   SwipeableMessageItem,
-  SearchIcon,
-  FilterIcon,
-  PencilPlusIcon,
 } from "./swipeable-message-item";
 import { NewMessagePopup } from "./new-message";
 import type { MessageItemData, User } from "@/types";
@@ -73,11 +70,11 @@ export function MessageList({
           isLoading={isUsersLoading}
         >
           <button
-            className="flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity p-[8px] gap-[6px] h-[32px] bg-[linear-gradient(180deg,rgba(255,255,255,0.12)_0%,rgba(255,255,255,0)_100%),#1E9A80] border border-[#1E9A80] shadow-[inset_0px_1px_0px_1px_rgba(255,255,255,0.12)] rounded-[8px] w-[134px]"
+            className="flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity p-[8px] gap-[6px] h-[32px] border-[linear-gradient(180deg,rgba(255,255,255,0.12)_0%,rgba(255,255,255,0)_100%),#1E9A80] border bg-[#1E9A80] shadow-[inset_0px_1px_0px_1px_rgba(255,255,255,0.12)] rounded-[8px] w-[134px]"
           >
-            <PencilPlusIcon className="w-[18px] h-[18px] text-white" />
+            <img src="/icons/pencil-plus.svg" alt="New Message" className="w-[18px] h-[18px] brightness-0 invert" />
             <span
-              className="font-medium text-[14px] leading-[20px] text-center  text-white"
+              className="font-medium text-[14px] leading-[20px] text-center text-white tracking-[-0.006em]"
             >
               New Message
             </span>
@@ -93,13 +90,13 @@ export function MessageList({
         <div
           className="flex items-center flex-1 p-[10px_5px_10px_10px] gap-[8px] h-[40px] border border-[#E8E5DF] rounded-[10px]"
         >
-          <SearchIcon className="w-4 h-4 shrink-0 text-[#262626]" />
+          <img src="/icons/search.svg" alt="Search" className="w-[16px] h-[16px]" />
           <input
             type="text"
-            placeholder="Search"
+            placeholder="Search in message"
             value={searchQuery}
             onChange={(e) => onSearchChange?.(e.target.value)}
-            className="flex-1 bg-transparent outline-none min-w-0 font-normal text-[14px] leading-[20px]  text-[#404040]"
+            className="flex-1 bg-transparent outline-none min-w-0 font-normal text-[14px] leading-[20px] text-[#404040] tracking-[-0.006em]"
           />
         </div>
 
@@ -107,7 +104,7 @@ export function MessageList({
         <button
           className="flex items-center justify-center shrink-0 w-[40px] h-[40px] bg-white border border-[#E8E5DF] rounded-[10px]"
         >
-          <FilterIcon className="w-[18px] h-[18px] text-[#262626]" />
+          <img src="/icons/filter.svg" alt="Filter" className="w-[18px] h-[18px]" />
         </button>
       </div>
 
