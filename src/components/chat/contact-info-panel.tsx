@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { X, Phone, Video, FileText, Link as LinkIcon, Image as ImageIcon, FileCode, FileImage } from "lucide-react";
+import { Image as ImageIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -55,8 +55,8 @@ function groupByMonth<T extends { date: Date }>(items: T[]) {
 
 function SectionHeader({ title }: { title: string }) {
   return (
-    <div className="bg-[#F8F8F5] px-3 h-8 flex items-center rounded-lg mb-2">
-      <span className="text-[12px] font-medium text-[#8B8B8B]">{title}</span>
+    <div className="bg-[#F8F8F5] px-[12px] py-[8px] h-[32px] flex items-center rounded-[8px] mb-[4px]">
+      <span className="text-[12px] font-medium leading-[16px] text-[#8B8B8B] font-sans">{title}</span>
     </div>
   );
 }
@@ -74,15 +74,15 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
   const grouped = groupByMonth(items);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-[8px]">
       {Object.entries(grouped).map(([month, monthItems]) => (
-        <div key={month}>
+        <div key={month} className="flex flex-col">
           <SectionHeader title={month} />
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-[4px]">
             {monthItems.map((item) => (
               <button
                 key={item.id}
-                className="relative aspect-square overflow-hidden rounded-lg bg-muted hover:opacity-90 transition-opacity ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="relative aspect-square overflow-hidden rounded-[8px] bg-muted hover:opacity-90 transition-opacity ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
 
                 <img
@@ -103,7 +103,7 @@ function LinkList({ items }: { items: LinkItem[] }) {
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
-        <LinkIcon className="mb-2 h-8 w-8 text-muted-foreground" />
+        <img src="/icons/paperclip.svg" alt="Links" className="mb-2 h-8 w-8 text-muted-foreground opacity-50" />
         <p className="text-sm text-muted-foreground">No links shared yet</p>
       </div>
     );
@@ -112,34 +112,31 @@ function LinkList({ items }: { items: LinkItem[] }) {
   const grouped = groupByMonth(items);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-[16px]">
       {Object.entries(grouped).map(([month, monthItems]) => (
-        <div key={month}>
+        <div key={month} className="flex flex-col gap-[12px]">
           <SectionHeader title={month} />
-          <div className="space-y-3">
+          <div className="flex flex-col gap-[12px]">
             {monthItems.map((item) => (
               <a
                 key={item.id}
                 href={item.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-start gap-3 group"
+                className="flex flex-row items-center gap-[12px] group h-[60px]"
               >
-                <div className="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-muted group-hover:bg-muted/80 transition-colors">
+                <div className="shrink-0 flex h-[60px] w-[60px] items-center justify-center rounded-[12px] bg-[#F7F9FB] overflow-hidden group-hover:bg-[#F0F2F5] transition-colors">
                   {item.favicon ? (
-                    <>
-
-                      <img src={item.favicon} alt="" className="h-5 w-5" />
-                    </>
+                    <img src={item.favicon} alt="" className="h-[32px] w-[32px] object-contain" />
                   ) : (
-                    <LinkIcon className="h-5 w-5 text-muted-foreground" />
+                    <img src="/icons/paperclip.svg" alt="Link" className="h-[24px] w-[24px] opacity-50" />
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                <div className="flex-1 min-w-0 flex flex-col gap-[4px] justify-center h-full">
+                  <p className="text-[14px] font-medium leading-[20px] tracking-[-0.006em] text-[#111625] truncate font-sans group-hover:text-primary transition-colors">
                     {item.title}
                   </p>
-                  <p className="text-xs text-muted-foreground line-clamp-2">
+                  <p className="text-[12px] font-normal leading-[16px] text-[#8B8B8B] line-clamp-2 font-sans">
                     {item.description ?? item.url}
                   </p>
                 </div>
@@ -152,27 +149,64 @@ function LinkList({ items }: { items: LinkItem[] }) {
   );
 }
 
-function getFileIcon(type: string) {
-  switch (type.toLowerCase()) {
-    case "pdf":
-      return <FileText className="h-5 w-5 text-red-500" />;
-    case "ai":
-    case "illustrator":
-      return <FileImage className="h-5 w-5 text-orange-500" />;
-    case "fig":
-    case "figma":
-      return <FileCode className="h-5 w-5 text-purple-500" />;
-    default:
-      return <FileText className="h-5 w-5 text-blue-500" />;
-  }
+function FileIcon({ type }: { type: string }) {
+  const meta = React.useMemo(() => {
+    switch (type.toLowerCase()) {
+      case "pdf":
+        return { color: "#FF1607", label: "PDF" };
+      case "ai":
+      case "illustrator":
+        return { color: "#FF5C00", label: "AI" };
+      case "fig":
+      case "figma":
+        return { color: "#6E45F0", label: "FIG" };
+      default:
+        return { color: "#007AFF", label: type.toUpperCase().slice(0, 3) };
+    }
+  }, [type]);
+
+  return (
+    <div className="relative w-[31.5px] h-[36px]">
+      {/* Main Rectangle */}
+      <div className="absolute inset-0 bg-white border-[1.35px] border-[#E8E5DF]" />
+
+      {/* Detail Rectangle (Top Right) */}
+      <div
+        className="absolute border-[1.35px] border-[#E8E5DF]"
+        style={{
+          left: "56.67%",
+          right: "3.33%",
+          top: "2.5%",
+          bottom: "67.5%"
+        }}
+      />
+
+      {/* Tag */}
+      <div
+        className="absolute flex items-center justify-center rounded-[1.8px] shadow-sm"
+        style={{
+          backgroundColor: meta.color,
+          left: "0px",
+          bottom: "4.5px",
+          padding: "1.8px 2.25px",
+          height: "14.6px",
+          minWidth: "18px"
+        }}
+      >
+        <span className="font-bold text-[9px] leading-[11px] text-center tracking-[-0.02em] text-white font-sans uppercase">
+          {meta.label}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 function DocList({ items }: { items: DocItem[] }) {
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
-        <FileText className="mb-2 h-8 w-8 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">No documents shared yet</p>
+        <FileIcon type="DOC" />
+        <p className="text-sm text-muted-foreground mt-2">No documents shared yet</p>
       </div>
     );
   }
@@ -180,26 +214,34 @@ function DocList({ items }: { items: DocItem[] }) {
   const grouped = groupByMonth(items);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-[16px]">
       {Object.entries(grouped).map(([month, monthItems]) => (
-        <div key={month}>
+        <div key={month} className="flex flex-col gap-[12px]">
           <SectionHeader title={month} />
-          <div className="space-y-3">
+          <div className="flex flex-col gap-[12px]">
             {monthItems.map((item) => (
               <button
                 key={item.id}
-                className="flex w-full items-start gap-3 group hover:bg-muted/50 p-2 -mx-2 rounded-lg transition-colors"
+                className="flex w-full items-center gap-[12px] group hover:bg-muted/50 rounded-lg transition-colors text-left"
                 onClick={() => console.log("Open doc", item.id)}
               >
-                <div className="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-muted/50">
-                  {getFileIcon(item.type)}
+                <div className="shrink-0 flex h-[60px] w-[60px] items-center justify-center rounded-[12px] bg-[#F3F3EE]">
+                  <FileIcon type={item.type} />
                 </div>
-                <div className="flex-1 min-w-0 text-left">
-                  <p className="text-sm font-medium text-foreground truncate">
+                <div className="flex-1 min-w-0 flex flex-col gap-[6px]">
+                  <p className="text-[14px] font-medium leading-[20px] tracking-[-0.006em] text-[#1C1C1C] truncate font-sans">
                     {item.name}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    {item.pages ? `${item.pages} pages • ` : ""}{item.size} • {item.type}
+                  <p className="text-[12px] font-normal leading-[16px] text-[#8B8B8B] font-sans flex items-center gap-1">
+                    {item.pages && (
+                      <>
+                        <span>{item.pages} pages</span>
+                        <span>•</span>
+                      </>
+                    )}
+                    <span>{item.size}</span>
+                    <span>•</span>
+                    <span className="lowercase">{item.type}</span>
                   </p>
                 </div>
               </button>
@@ -276,82 +318,100 @@ export function ContactInfoPanel({
 
   return (
     <div
-      className="absolute right-3 top-3 bottom-3 w-[450px] bg-white rounded-[24px] z-20 flex flex-col overflow-hidden border border-gray-100 shadow-[0px_4px_32px_rgba(0,0,0,0.12)] h-[calc(100vh-24px)]"
+      className="absolute right-3 top-3 bottom-3 w-[450px] bg-white rounded-[24px] z-20 flex flex-col overflow-hidden shadow-[0px_4px_32px_rgba(0,0,0,0.12)] h-[1000px] max-h-[calc(100vh-24px)]"
+      style={{ right: '12px', top: '12px' }}
     >
 
       {/* Header */}
-      <div className="flex items-center justify-between px-6 pt-6 pb-2 shrink-0">
-        <h2 className="text-[20px] font-semibold text-[#111625] leading-7">Contact Info</h2>
+      <div className="flex items-center gap-[10px] justify-center pt-[24px] pb-[24px] shrink-0">
+        <h2
+          className="text-[20px] font-semibold text-[#111625] leading-[28px] text-center"
+          style={{ fontFamily: "'Inter Display', sans-serif" }}
+        >
+          Contact Info
+        </h2>
         <button
           onClick={onClose}
-          className="text-[#111625] hover:opacity-70 transition-opacity"
+          className="absolute right-[24px] top-[24px] text-[#111625] hover:opacity-70 transition-opacity"
         >
-          <X size={24} />
+          <img src="/icons/x.svg" alt="Close" className="w-6 h-6" />
         </button>
       </div>
 
       <ScrollArea className="flex-1">
         <div className="px-6 pb-6">
           {/* Profile */}
-          <div className="flex flex-col items-center pt-2 pb-8">
-            <Avatar className="h-[72px] w-[72px] mb-4 bg-[#F7F9FB]">
+          <div className="flex flex-col items-center gap-[16px] pb-8">
+            <Avatar className="h-[72px] w-[72px] bg-[#F7F9FB] rounded-full">
               <AvatarImage src={user.image} alt={user.name} />
               <AvatarFallback className="text-2xl text-[#111625]">
                 {user.name.split(" ").map((n) => n[0]).join("").toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <div className="flex flex-col items-center gap-1 mb-6">
-              <h3 className="text-[16px] font-medium text-[#111625] leading-6 -tracking-[0.011em]">{user.name}</h3>
-              <p className="text-[12px] text-[#8B8B8B] leading-4">{user.email}</p>
+            <div className="flex flex-col items-center gap-[4px] w-full h-[44px]">
+              <h3 className="text-[16px] font-medium text-[#111625] leading-[24px] text-center tracking-[-0.011em] font-sans">
+                {user.name}
+              </h3>
+              <p className="text-[12px] font-normal text-[#8B8B8B] leading-[16px] font-sans">
+                {user.email}
+              </p>
             </div>
 
             {/* Actions */}
-            <div className="flex w-full gap-4">
+            <div className="flex flex-row items-start gap-[16px] w-[402px] h-[32px]">
               <Button
                 variant="outline"
-                className="flex-1 h-8 rounded-lg border-[#E8E5DF] text-[#111625] text-[14px] font-medium gap-1.5 hover:bg-gray-50 bg-white"
+                className="flex flex-row justify-center items-center p-[8px] gap-[6px] w-[193px] h-[32px] bg-white border border-[#E8E5DF] rounded-[8px] hover:bg-gray-50"
               >
-                <Phone size={18} /> Audio
+                <img src="/icons/phone.svg" alt="Phone" className="w-[18px] h-[18px]" />
+                <span className="font-medium text-[14px] leading-[20px] text-center tracking-[-0.006em] text-[#111625] font-sans">
+                  Audio
+                </span>
               </Button>
               <Button
                 variant="outline"
-                className="flex-1 h-8 rounded-lg border-[#E8E5DF] text-[#111625] text-[14px] font-medium gap-1.5 hover:bg-gray-50 bg-white"
+                className="flex flex-row justify-center items-center p-[8px] gap-[6px] w-[193px] h-[32px] bg-white border border-[#E8E5DF] rounded-[8px] hover:bg-gray-50"
               >
-                <Video size={18} /> Video
+                <img src="/icons/video.svg" alt="Video" className="w-[18px] h-[18px]" />
+                <span className="font-medium text-[14px] leading-[20px] text-center tracking-[-0.006em] text-[#111625] font-sans">
+                  Video
+                </span>
               </Button>
             </div>
           </div>
 
           {/* Content Tabs */}
-          <Tabs defaultValue="media" className="w-full">
-            <TabsList className="w-fit h-10 bg-[#F3F3EE] rounded-xl p-[2px] mb-6 gap-0">
-              <TabsTrigger
-                value="media"
-                className="px-4 h-9 rounded-[10px] data-[state=active]:bg-white data-[state=active]:shadow-[0px_0px_16px_rgba(0,0,0,0.06)] text-[14px] font-medium text-[#8B8B8B] data-[state=active]:text-[#111625] transition-all"
-              >
-                Media
-              </TabsTrigger>
-              <TabsTrigger
-                value="link"
-                className="px-4 h-9 rounded-[10px] data-[state=active]:bg-white data-[state=active]:shadow-[0px_0px_16px_rgba(0,0,0,0.06)] text-[14px] font-medium text-[#8B8B8B] data-[state=active]:text-[#111625] transition-all"
-              >
-                Link
-              </TabsTrigger>
-              <TabsTrigger
-                value="docs"
-                className="px-4 h-9 rounded-[10px] data-[state=active]:bg-white data-[state=active]:shadow-[0px_0px_16px_rgba(0,0,0,0.06)] text-[14px] font-medium text-[#8B8B8B] data-[state=active]:text-[#111625] transition-all"
-              >
-                Docs
-              </TabsTrigger>
-            </TabsList>
+          <Tabs defaultValue="media" className="w-full flex flex-col items-start gap-[12px]">
+            <div className="flex flex-row justify-center items-center p-[2px] w-fit h-[40px] bg-[#F3F3EE] rounded-[12px]">
+              <TabsList className="bg-transparent p-0 gap-[2px] w-full justify-start h-full flex">
+                <TabsTrigger
+                  value="media"
+                  className="flex flex-row justify-center items-center px-[10px] py-[8px] gap-[8px] h-[36px] min-w-[61px] rounded-[10px] data-[state=active]:bg-white data-[state=active]:shadow-[0px_0px_16px_rgba(0,0,0,0.06)] bg-transparent shadow-none"
+                >
+                  <span className="font-medium text-[14px] leading-[20px] text-center tracking-[-0.006em] text-[#111625]">Media</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="link"
+                  className="flex flex-row justify-center items-center px-[10px] py-[8px] gap-[8px] h-[36px] min-w-[48px] rounded-[10px] data-[state=active]:bg-white data-[state=active]:shadow-[0px_0px_16px_rgba(0,0,0,0.06)] bg-transparent shadow-none"
+                >
+                  <span className="font-medium text-[14px] leading-[20px] text-center tracking-[-0.006em] text-[#8B8B8B] data-[state=active]:text-[#111625]">Link</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="docs"
+                  className="flex flex-row justify-center items-center px-[10px] py-[8px] gap-[8px] h-[36px] min-w-[54px] rounded-[10px] data-[state=active]:bg-white data-[state=active]:shadow-[0px_0px_16px_rgba(0,0,0,0.06)] bg-transparent shadow-none"
+                >
+                  <span className="font-medium text-[14px] leading-[20px] text-center tracking-[-0.006em] text-[#8B8B8B] data-[state=active]:text-[#111625]">Docs</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-            <TabsContent value="media" className="mt-0 outline-none animate-in fade-in-50 duration-300">
+            <TabsContent value="media" className="mt-0 w-full outline-none animate-in fade-in-50 duration-300">
               <MediaGrid items={displayMedia} />
             </TabsContent>
-            <TabsContent value="link" className="mt-0 outline-none animate-in fade-in-50 duration-300">
+            <TabsContent value="link" className="mt-0 w-full outline-none animate-in fade-in-50 duration-300">
               <LinkList items={displayLinks} />
             </TabsContent>
-            <TabsContent value="docs" className="mt-0 outline-none animate-in fade-in-50 duration-300">
+            <TabsContent value="docs" className="mt-0 w-full outline-none animate-in fade-in-50 duration-300">
               <DocList items={displayDocs} />
             </TabsContent>
           </Tabs>
