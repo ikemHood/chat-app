@@ -94,13 +94,13 @@ export default function SignUpPage() {
       {/* Logo */}
       <div className="mb-8 flex flex-col items-center gap-2">
         <div className="overflow-hidden rounded-full cursor-pointer hover:opacity-90 transition-opacity w-[44px] h-[44px]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img 
-                src="/logo.png" 
-                alt="Logo" 
-                className="h-full w-full object-cover"
-              />
-            </div>
+
+          <img
+            src="/logo.png"
+            alt="Logo"
+            className="h-full w-full object-cover"
+          />
+        </div>
         <h1 className="text-xl font-semibold text-foreground">Chat APP</h1>
       </div>
 

@@ -84,7 +84,7 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
                 key={item.id}
                 className="relative aspect-square overflow-hidden rounded-lg bg-muted hover:opacity-90 transition-opacity ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+
                 <img
                   src={item.thumbnail ?? item.url}
                   alt=""
@@ -128,7 +128,7 @@ function LinkList({ items }: { items: LinkItem[] }) {
                 <div className="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-muted group-hover:bg-muted/80 transition-colors">
                   {item.favicon ? (
                     <>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
+
                       <img src={item.favicon} alt="" className="h-5 w-5" />
                     </>
                   ) : (
@@ -275,15 +275,15 @@ export function ContactInfoPanel({
   const displayDocs = docs.length > 0 ? docs : MOCK_DOCS;
 
   return (
-    <div 
+    <div
       className="absolute right-3 top-3 bottom-3 w-[450px] bg-white rounded-[24px] z-20 flex flex-col overflow-hidden border border-gray-100 shadow-[0px_4px_32px_rgba(0,0,0,0.12)] h-[calc(100vh-24px)]"
     >
-      
+
       {/* Header */}
       <div className="flex items-center justify-between px-6 pt-6 pb-2 shrink-0">
         <h2 className="text-[20px] font-semibold text-[#111625] leading-7">Contact Info</h2>
-        <button 
-          onClick={onClose} 
+        <button
+          onClick={onClose}
           className="text-[#111625] hover:opacity-70 transition-opacity"
         >
           <X size={24} />
@@ -304,17 +304,17 @@ export function ContactInfoPanel({
               <h3 className="text-[16px] font-medium text-[#111625] leading-6 -tracking-[0.011em]">{user.name}</h3>
               <p className="text-[12px] text-[#8B8B8B] leading-4">{user.email}</p>
             </div>
-            
+
             {/* Actions */}
             <div className="flex w-full gap-4">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="flex-1 h-8 rounded-lg border-[#E8E5DF] text-[#111625] text-[14px] font-medium gap-1.5 hover:bg-gray-50 bg-white"
               >
                 <Phone size={18} /> Audio
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="flex-1 h-8 rounded-lg border-[#E8E5DF] text-[#111625] text-[14px] font-medium gap-1.5 hover:bg-gray-50 bg-white"
               >
                 <Video size={18} /> Video
@@ -325,20 +325,20 @@ export function ContactInfoPanel({
           {/* Content Tabs */}
           <Tabs defaultValue="media" className="w-full">
             <TabsList className="w-fit h-10 bg-[#F3F3EE] rounded-xl p-[2px] mb-6 gap-0">
-              <TabsTrigger 
-                value="media" 
+              <TabsTrigger
+                value="media"
                 className="px-4 h-9 rounded-[10px] data-[state=active]:bg-white data-[state=active]:shadow-[0px_0px_16px_rgba(0,0,0,0.06)] text-[14px] font-medium text-[#8B8B8B] data-[state=active]:text-[#111625] transition-all"
               >
                 Media
               </TabsTrigger>
-              <TabsTrigger 
-                value="link" 
+              <TabsTrigger
+                value="link"
                 className="px-4 h-9 rounded-[10px] data-[state=active]:bg-white data-[state=active]:shadow-[0px_0px_16px_rgba(0,0,0,0.06)] text-[14px] font-medium text-[#8B8B8B] data-[state=active]:text-[#111625] transition-all"
               >
                 Link
               </TabsTrigger>
-              <TabsTrigger 
-                value="docs" 
+              <TabsTrigger
+                value="docs"
                 className="px-4 h-9 rounded-[10px] data-[state=active]:bg-white data-[state=active]:shadow-[0px_0px_16px_rgba(0,0,0,0.06)] text-[14px] font-medium text-[#8B8B8B] data-[state=active]:text-[#111625] transition-all"
               >
                 Docs

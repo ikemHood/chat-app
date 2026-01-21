@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
 
 interface UserMenuProps {
     user?: {
@@ -73,10 +72,10 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
                 <div className="flex flex-row items-center p-2 gap-3 w-full h-[56px] rounded-[8px]">
                     <div className="flex flex-col justify-center items-start gap-0.5 flex-1">
                         <span className="font-sans font-semibold text-[14px] leading-[20px] tracking-[-0.01em] text-[#1C1C1C]">
-                            {user?.name || "testing2"}
+                            {user?.name ?? "testing2"}
                         </span>
                         <span className="font-sans font-normal text-[12px] leading-[150%] tracking-[-0.01em] text-[#8B8B8B]">
-                            {user?.email || "testing2@gmail.com"}
+                            {user?.email ?? "testing2@gmail.com"}
                         </span>
                     </div>
                 </div>

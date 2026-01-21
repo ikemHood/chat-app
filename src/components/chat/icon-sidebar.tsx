@@ -47,7 +47,7 @@ export function IconSidebar({
           <Popover>
             <PopoverTrigger asChild>
               <div className="flex items-center justify-center w-11 h-11 cursor-pointer hover:opacity-90 transition-opacity flex-none">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+
                 <img
                   src="/logo.png"
                   alt="Logo"
@@ -79,7 +79,7 @@ export function IconSidebar({
                     )}
                     onClick={() => onNavigate?.(item.id)}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+
                     <img
                       src={item.icon}
                       alt={item.label}
@@ -102,7 +102,7 @@ export function IconSidebar({
               <button
                 className="flex items-center justify-center w-11 h-11 rounded-lg hover:bg-muted transition-all"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+
                 <img
                   src="/icons/StarFour.svg"
                   alt="Theme"

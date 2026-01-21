@@ -395,6 +395,7 @@ export function ChatArea({
         <div
           className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#F3F3EE]"
         >
+
           <img src="/icons/send.svg" className="h-8 w-8 opacity-50" alt="" />
         </div>
         <h3 className="text-lg font-semibold text-[#111625]">Select a conversation</h3>
@@ -426,6 +427,7 @@ export function ChatArea({
                 onBack?.();
               }}
             >
+
               <img src="/icons/chevron-right.svg" className="h-6 w-6 rotate-180" alt="Back" />
             </div>
 
@@ -452,6 +454,7 @@ export function ChatArea({
           {/* Icon row */}
           <div className="flex items-center gap-3">
             <IconButton tooltip="Search in chat">
+
               <img src="/icons/search.svg" className="w-4 h-4" alt="Search" />
             </IconButton>
             <IconButton tooltip="Voice call">
