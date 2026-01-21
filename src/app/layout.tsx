@@ -9,7 +9,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 export const metadata: Metadata = {
   title: "Message - Chat App",
   description: "A modern real-time messaging application",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  icons: [{ rel: "icon", url: "/logo.png" }],
+
 };
 
 const geist = Geist({
